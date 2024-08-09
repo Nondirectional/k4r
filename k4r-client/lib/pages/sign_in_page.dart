@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:k4r_client/component/api_caller.dart';
-import 'package:k4r_client/providers/access_token_provider.dart';
 import 'package:k4r_client/providers/logged_sate_provider.dart';
+import 'package:k4r_client/providers/user_session.dart';
 import 'package:provider/provider.dart';
 
 class SignInPage extends StatefulWidget {
@@ -28,8 +28,9 @@ class SignInPageState extends State<SignInPage> {
         print(response.data);
         setState(() {
           loggedIn = true;
-          AccessTokenProvider accessTokenProvider = Provider.of<AccessTokenProvider>(context, listen: false);
-          accessTokenProvider.accessToken = response.data.data;
+          UserSessionProvider sessionProvider =
+              Provider.of<UserSessionProvider>(context, listen: false);
+          sessionProvider.session ??= UserSession(response.data.data);
           LoggedSateProvider loggedSateProvider =
           Provider.of<LoggedSateProvider>(context, listen: false);
           loggedSateProvider.login();
