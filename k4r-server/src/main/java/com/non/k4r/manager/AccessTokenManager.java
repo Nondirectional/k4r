@@ -30,7 +30,9 @@ public class AccessTokenManager {
         RMapCache<String, AccessTokenBody> map = map();
 
         AccessTokenBody body = new AccessTokenBody();
-        body.setUserId(userId);
+        body
+                .setToken(token)
+                .setUserId(userId);
         map.put(token, body, 72, TimeUnit.HOURS);
         return token;
     }

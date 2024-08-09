@@ -7,8 +7,8 @@ import java.util.Optional;
 public class RequestContext {
     private static final ThreadLocal<AccessTokenBody> ACCESS_TOKEN_BODY_HOLDER = new ThreadLocal<>();
 
-    public static void setAccessTokenBody(AccessTokenBody user) {
-        ACCESS_TOKEN_BODY_HOLDER.set(user);
+    public static void setAccessTokenBody(AccessTokenBody body) {
+        ACCESS_TOKEN_BODY_HOLDER.set(body);
     }
 
     public static AccessTokenBody getAccessTokenBody() {
