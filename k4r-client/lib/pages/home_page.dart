@@ -1,168 +1,145 @@
-
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:k4r_client/providers/logged_sate_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:k4r_client/component/home_drawer.dart';
+import 'package:timeline_list/timeline.dart';
+import 'package:timeline_list/timeline_model.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  final String appBarTitle = 'HOME';
   const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: Text(widget.appBarTitle),
         actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.search))],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const SizedBox(
-              height: 70,
-              child: DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                  ),
-                  child: Row(children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 30,
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.blue,
-                        size: 30,
-                      ),
-                    ),
-                    Text('Nondirectional',
-                        style: TextStyle(color: Colors.white, fontSize: 24))
-                  ])),
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.home),
-                  SizedBox(width: 10),
-                  Text('Home'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.timeline),
-                  SizedBox(width: 10),
-                  Text('Timeline'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.attachment),
-                  SizedBox(width: 10),
-                  Text('Resources'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.explore),
-                  SizedBox(width: 10),
-                  Text('Explore'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.person),
-                  SizedBox(width: 10),
-                  Text('Profile'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-                GoRouter.of(context).push('/profile');
+      drawer: const HomeDrawer(),
+      body: RecordList(),
+      floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.add),
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("xxx"),
+                  );
+                });
+          }),
+    );
+  }
+}
 
+class RecordList extends StatefulWidget {
+  RecordList({super.key});
+
+  @override
+  State<RecordList> createState() => _RecordListState();
+}
+
+class _RecordListState extends State<RecordList> {
+  GlobalKey _timelineKey = GlobalKey();
+  List<TimelineModel> items = [];
+  ScrollController _timelineController = ScrollController();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 请求数据
+
+    // 构造数据，默认10条
+    for (var i = 0; i < 10; i++) {
+      // items
+      items.add(TimelineModel(
+          RecordCard(
+            data: {
+              'title': "Record $i",
+              'subTitle': "subTitle 今晚聚众干饭，太好吃了，干了八大碗，减肥计划又要延迟了。"
+            },
+          ),
+          position: TimelineItemPosition.right,
+          iconBackground: const Color.fromARGB(255, 82, 255, 226),
+          icon: const Icon(Icons.face_4)));
+    }
+
+    // scrollController
+    _timelineController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_isLoading) return;
+
+    print(_timelineController.position);
+
+    if (_timelineController.position.pixels ==
+        _timelineController.position.maxScrollExtent) {
+      _loadMore();
+      _isLoading = true;
+    }
+  }
+
+  Future<void> _loadMore() async {
+    print('到底了，加载数据中...');
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      var len = items.length;
+      for (var i = len; i < len + 10; i++) {
+        // items
+        items.add(TimelineModel(
+            RecordCard(
+              data: {
+                'title': "Record $i",
+                'subTitle': "subTitle 今晚又聚众干饭，太好吃了，干了八大碗，减肥计划又要延迟了。"
               },
             ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.inbox),
-                  SizedBox(width: 10),
-                  Text('InBox'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.archive),
-                  SizedBox(width: 10),
-                  Text('Archived'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.settings),
-                  SizedBox(width: 10),
-                  Text('Settings'),
-                ],
-              ),
-              onTap: () {
-                // Add your code here to handle the tap event
-              },
-            ),
-            ListTile(
-              title: const Row(
-                children: [
-                  Icon(Icons.logout),
-                  SizedBox(width: 10),
-                  Text('Logout'),
-                ],
-              ),
-              onTap: () {
-                LoggedSateProvider loggedState = Provider.of<LoggedSateProvider>(context, listen: false);
-                loggedState.logout();
-                GoRouter.of(context).go('/login');
-              },
-            ),
-          ],
-        ),
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Home Page',
-              style: TextStyle(fontSize: 36),
-            )
-          ],
-        ),
+            position: TimelineItemPosition.right,
+            iconBackground: const Color.fromARGB(255, 58, 203, 255),
+            icon: const Icon(Icons.access_alarms_rounded)));
+      }
+      print(items.length);
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Timeline(
+        controller: _timelineController,
+        iconSize: 16,
+        position: TimelinePosition.Left,
+        children: items);
+  }
+}
+
+class RecordCard extends StatefulWidget {
+  final Map data;
+  const RecordCard({super.key, required this.data});
+
+  @override
+  State<RecordCard> createState() => _RecordCardState();
+}
+
+class _RecordCardState extends State<RecordCard> {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 10,
+      margin: const EdgeInsets.all(8),
+      child: Column(
+        children: [
+          ListTile(
+            leading: widget.data['leading'] ?? widget.data['leading'],
+            title: Text(widget.data['title']),
+            subtitle: Text(widget.data['subTitle']),
+          )
+        ],
       ),
     );
   }
