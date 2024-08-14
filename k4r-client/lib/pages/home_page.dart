@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:k4r_client/component/home_drawer.dart';
+import 'package:k4r_client/db/my_database.dart';
 import 'package:timeline_list/timeline.dart';
 import 'package:timeline_list/timeline_model.dart';
 
@@ -12,6 +14,43 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final database = AppDatabase();
+
+  void _addUser() async {
+    // 插入
+    // var user = UsersCompanion.insert(
+    //     name: "xiaohai",
+    //     email: "xiaohai@gmail.com",
+    //     playload: '{"name": "xiaohai", "age": 35}');
+    // await database.into(database.users).insert(user);
+
+    // 更新
+    // var userUpdate = database.update(database.users);
+    // userUpdate.where((u) => u.id.equals(1));
+    // await userUpdate.write(const UsersCompanion(
+    //     id: drift.Value(1),
+    //     name: drift.Value('CCCCCCCC'),
+    //     playload: drift.Value('{"ccc": 1}')));
+
+    // 删除
+    // var userDelete = database.delete(database.users);
+    // // userDelete.where((u) => u.id.equals(3));
+    // await userDelete.go();
+
+    // var userQuery = database.select(database.users);
+    // userQuery.where((u) => u.id.equals(2));
+    // User u = await userQuery.getSingle();
+    // print('u >>> $u');
+
+    // user = UsersCompanion.insert(
+    //     name: "test", email: "test@gmail.com", playload: '{"ccc": 1}');
+    // await database.into(database.users).insert(user);
+    List<User> users = await database.select(database.users).get();
+    print('all users: $users');
+    List<AppConfig> configs = await database.select(database.appConfigs).get();
+    print('all configs: $configs');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +63,7 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.add),
           onPressed: () {
+            _addUser();
             showDialog(
                 context: context,
                 builder: (context) {
