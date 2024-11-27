@@ -7,8 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.non.k4r.module.common.K4rRoutes.ExpenditureSubmitRoute
-import com.non.k4r.module.common.K4rRoutes.MainRoute
+import com.non.k4r.module.common.ExpenditureSubmitRoute
+import com.non.k4r.module.common.MainRoute
 import com.non.k4r.module.common.MainScreen
 import com.non.k4r.module.expenditure.ExpenditureSubmitScreen
 
