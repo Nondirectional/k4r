@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.0.21"
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -41,6 +42,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.room.runtime) // Room 核心库
+    ksp(libs.androidx.room.compiler) // Room 编译器
+    implementation(libs.androidx.room.ktx) // Kotlin 扩展
+
     implementation(libs.navigation.compose)
     implementation(libs.androidx.navigation.ui)
     // JSON serialization library, works with the Kotlin serialization plugin

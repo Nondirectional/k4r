@@ -17,6 +17,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +36,11 @@ import kotlin.math.abs
 
 @Composable
 fun ExpenditureSubmitScreen(modifier: Modifier = Modifier) {
+    var title by remember { mutableStateOf("") }
+    var detail by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf(listOf("")) }
+    var amount by remember { mutableFloatStateOf(0.00f) }
+
     AppTheme {
         Box(
             modifier = modifier
