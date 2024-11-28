@@ -1,7 +1,6 @@
 package com.non.k4r
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,7 +12,6 @@ import com.non.k4r.module.common.ExpenditureSubmitRoute
 import com.non.k4r.module.common.MainRoute
 import com.non.k4r.module.common.MainScreen
 import com.non.k4r.module.common.db.AppDatabase
-import com.non.k4r.module.common.entity.RecordEntity
 import com.non.k4r.module.expenditure.ExpenditureSubmitScreen
 import kotlinx.coroutines.launch
 

@@ -1,5 +1,6 @@
 package com.non.k4r.module.expenditure
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,16 +20,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.non.k4r.R
@@ -34,12 +40,14 @@ import com.non.k4r.ui.theme.AppTheme
 import java.util.Locale
 import kotlin.math.abs
 
+const val TAG: String = "Expenditure"
+
 @Composable
 fun ExpenditureSubmitScreen(modifier: Modifier = Modifier) {
     var title by remember { mutableStateOf("") }
     var detail by remember { mutableStateOf("") }
-    var tags by remember { mutableStateOf(listOf("")) }
-    var amount by remember { mutableFloatStateOf(0.00f) }
+    val tags = remember { mutableStateListOf<String>() }
+    var amount by remember { mutableStateOf("") }
 
     AppTheme {
         Box(
@@ -50,13 +58,43 @@ fun ExpenditureSubmitScreen(modifier: Modifier = Modifier) {
         ) {
             Column(modifier = Modifier.padding(8.dp)) {
                 TextField(
-                    placeholder = { Text("Enter amount") },
-                    label = { Text("Amount") },
-                    onValueChange = {},
-                    value = "",
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("请输入金额") },
+                    label = {
+                        Text("金额")
+                    },
+                    onValueChange = {
+                        try {
+                            amount = if (it.isBlank())
+                                it
+                            else
+                                "-?(0|[1-9]?[0-9]+)+\\.?([0-9]+)?".toRegex()
+                                    .find(it)?.value ?: amount
+                        } catch (e: Exception) {
+                            Log.e(TAG, "ExpenditureSubmitScreen: fail", e)
+                        }
+                    },
+                    value = amount,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusEvent {
+                            if (!it.hasFocus) {
+                                amount = try {
+                                    String.format(
+                                        locale = Locale.getDefault(),
+                                        format = "%.2f",
+                                        amount.toFloat()
+                                    )
+                                } catch (e: Exception) {
+                                    "0.00"
+                                }
+                            }
+                        },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardActions = KeyboardActions(onDone = {
+                        amount =
+                            String.format(locale = Locale.getDefault(), format = "%.2f", amount)
+                    })
                 )
-
                 TextField(
                     placeholder = { Text("Enter title") },
                     label = { Text("Title") },
@@ -110,7 +148,7 @@ fun ExpenditureCard(
     title: String,
     amount: Double,
     tags: List<String>,
-    detail: String
+    detail: String,
 ) {
     AppTheme {
         Surface(
