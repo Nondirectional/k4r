@@ -10,12 +10,12 @@ interface RecordDao {
     @Insert
     suspend fun insert(record: RecordEntity)
 
-    @Query("SELECT * FROM k4r_record WHERE id = :id")
+    @Query("SELECT * FROM k4r_records WHERE id = :id")
     suspend fun getRecord(id: Int): RecordEntity?
 
-    @Query("SELECT * FROM k4r_record")
+    @Query("SELECT * FROM k4r_records")
     suspend fun getAllRecords(): List<RecordEntity>
 
-    @Query("DELETE FROM k4r_record WHERE id = :id")
+    @Query("DELETE FROM k4r_records WHERE id = :id")
     suspend fun deleteRecord(id: Int)
 }

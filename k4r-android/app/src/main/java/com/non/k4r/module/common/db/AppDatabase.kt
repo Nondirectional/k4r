@@ -6,10 +6,13 @@ import androidx.room.RoomDatabase
 import android.content.Context
 import com.non.k4r.module.common.dao.RecordDao
 import com.non.k4r.module.common.entity.RecordEntity
+import com.non.k4r.module.expenditure.dao.ExpenditureTagDao
+import com.non.k4r.module.expenditure.entity.ExpenditureTagEntity
 
-@Database(entities = [RecordEntity::class], version = 1)
+@Database(entities = [RecordEntity::class, ExpenditureTagEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun recordDao():RecordDao
+    abstract fun recordDao(): RecordDao
+    abstract fun expenditureTagDao(): ExpenditureTagDao
 
     companion object {
         @Volatile
