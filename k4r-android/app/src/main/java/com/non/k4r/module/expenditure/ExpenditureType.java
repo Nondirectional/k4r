@@ -1,6 +1,6 @@
 package com.non.k4r.module.expenditure;
 
-enum  ExpenditureType {
+public enum  ExpenditureType {
     Expenditure,
     Income
 }

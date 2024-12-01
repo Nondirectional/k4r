@@ -1,4 +1,4 @@
-package com.non.k4r.module.expenditure
+package com.non.k4r.module.expenditure.component
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -22,8 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.non.k4r.R
-import com.non.k4r.module.common.ExpenditureSubmitRoute
+import com.non.k4r.module.common.K4rTextField
+import com.non.k4r.module.expenditure.ExpenditureType
+import com.non.k4r.module.expenditure.dao.ExpenditureTagDao
 import com.non.k4r.module.expenditure.entity.ExpenditureTagEntity
 import com.non.k4r.ui.theme.AppTheme
 import java.util.Locale
@@ -53,122 +57,136 @@ const val TAG: String = "Expenditure"
 @Composable
 fun ExpenditureSubmitScreen(
     modifier: Modifier = Modifier,
-    route: ExpenditureSubmitRoute,
+    expenditureTagDao: ExpenditureTagDao,
 ) {
+//    val tagListViewModel: ExpenditureTagListViewModel = viewModel()
+    val displayTags by tagListViewModel.tags.collectAsState()
+    LaunchedEffect(true) {
+        tagListViewModel.loadTags(dao = expenditureTagDao)
+    }
+
     var introduction by remember { mutableStateOf("") }
     var remark by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var expenditureType by remember { mutableStateOf(ExpenditureType.Expenditure) }
     var selectedTas = remember { mutableStateMapOf<String, ExpenditureTagEntity>() }
+
     AppTheme {
-        Box(
+        Surface(
             modifier = modifier
-                .safeDrawingPadding()
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
         ) {
-            Column(
-                modifier = Modifier.padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "开支/收入",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                TextField(
-                    placeholder = { Text("请输入金额") },
-                    label = {
-                        Text("金额")
-                    },
-                    onValueChange = {
-                        try {
-                            amount = if (it.isBlank())
-                                it
-                            else
-                                "-?(0|[1-9]?[0-9]+)+\\.?([0-9]+)?".toRegex()
-                                    .find(it)?.value ?: amount
-                        } catch (e: Exception) {
-                            Log.e(TAG, "ExpenditureSubmitScreen: fail", e)
-                        }
-                    },
-                    value = amount,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusEvent {
-                            if (!it.hasFocus) {
-                                amount = try {
-                                    String.format(
-                                        locale = Locale.getDefault(),
-                                        format = "%.2f",
-                                        amount.toFloat()
-                                    )
-                                } catch (e: Exception) {
-                                    "0.00"
-                                }
+            Box(
+                modifier = modifier
+                    .safeDrawingPadding()
+                    .fillMaxSize(),
+
+                contentAlignment = BiasAlignment(0f, -0.1f),
+
+                ) {
+                Column(
+                    modifier = Modifier.padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "开支/收入",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    K4rTextField(
+                        placeholder = "请输入金额",
+                        label = "金额",
+                        onValueChange = {
+                            try {
+                                amount = if (it.isBlank())
+                                    it
+                                else
+                                    "-?(0|[1-9]?[0-9]+)+\\.?([0-9]+)?".toRegex()
+                                        .find(it)?.value ?: amount
+                            } catch (e: Exception) {
+                                Log.e(TAG, "ExpenditureSubmitScreen: fail", e)
                             }
                         },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    keyboardActions = KeyboardActions(onDone = {
-                        amount =
-                            String.format(locale = Locale.getDefault(), format = "%.2f", amount)
-                    })
-                )
-                TextField(
-                    placeholder = { Text("请输入简介") },
-                    label = { Text("简介") },
-                    onValueChange = { introduction = it },
-                    value = "",
-                    modifier = Modifier.fillMaxWidth()
-
-                )
-                TextField(
-                    placeholder = { Text("请输入备注") },
-                    label = { Text("备注") },
-                    onValueChange = { remark = it },
-                    value = "",
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-
-                )
-
-                Row {
-                    Box(
-                        contentAlignment = Alignment.Center,
+                        value = amount,
                         modifier = Modifier
-                            .weight(0.5f)
-                            .heightIn(min = 50.dp)
-                            .clickable(onClick = {
-                                expenditureType = ExpenditureType.Expenditure
-                            })
-                            .background(color = if (expenditureType == ExpenditureType.Expenditure) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(fontSize = 24.sp, text = "支出")
+                            .fillMaxWidth()
+                            .onFocusEvent {
+                                if (!it.hasFocus) {
+                                    if (!amount.isBlank())
+                                        amount = try {
+                                            String.format(
+                                                locale = Locale.getDefault(),
+                                                format = "%.2f",
+                                                amount.toFloat()
+                                            )
+                                        } catch (_: Exception) {
+                                            "0.00"
+                                        }
+                                }
+                            },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardActions = KeyboardActions(onDone = {
+                            amount =
+                                String.format(locale = Locale.getDefault(), format = "%.2f", amount)
+                        })
+                    )
+                    K4rTextField(
+                        placeholder = "请输入简介",
+                        label = "简介",
+                        onValueChange = { introduction = it },
+                        value = introduction,
+                        modifier = Modifier.fillMaxWidth()
+
+                    )
+                    K4rTextField(
+                        placeholder = "请输入备注",
+                        label = "备注",
+                        onValueChange = { remark = it },
+                        value = remark,
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(Modifier.padding(vertical = 4.dp))
+                    Row(modifier = modifier.clip(shape = MaterialTheme.shapes.small)) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .heightIn(min = 50.dp)
+                                .clickable(onClick = {
+                                    expenditureType = ExpenditureType.Expenditure
+                                })
+                                .background(color = if (expenditureType == ExpenditureType.Expenditure) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Text(fontSize = 24.sp, text = "支出")
+                        }
+
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .heightIn(min = 50.dp)
+                                .clickable(onClick = {
+                                    expenditureType = ExpenditureType.Income
+                                })
+                                .background(color = if (expenditureType == ExpenditureType.Income) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Text(fontSize = 24.sp, text = "支出")
+                        }
                     }
 
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .heightIn(min = 50.dp)
-                            .clickable(onClick = {
-                                expenditureType = ExpenditureType.Income
-                            })
-                            .background(color = if (expenditureType == ExpenditureType.Income) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(fontSize = 24.sp, text = "支出")
-                    }
+                    Spacer(modifier.padding(top = 4.dp))
+                    ExpenditureTagSelector(expenditureTags = displayTags, selectedTas = selectedTas)
                 }
-
-                ExpenditureTagSelector(expenditureTags = expenditureTags, selectedTas = selectedTas)
-            }
-            ElevatedButton(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .align(alignment = BiasAlignment(0.9f, 0.9f)),
-                onClick = {}) {
-                Text("确认")
+                ElevatedButton(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(alignment = BiasAlignment(0.95f, 1.0f)),
+                    onClick = {
+                    }) {
+                    Text("确认")
+                }
             }
         }
     }
@@ -185,7 +203,6 @@ fun ExpenditureCard(
     AppTheme {
         Surface(
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primaryContainer,
             shadowElevation = 3.dp,
             modifier = modifier
                 .fillMaxWidth()
@@ -206,14 +223,12 @@ fun ExpenditureCard(
                     Text(text = title, style = MaterialTheme.typography.titleMedium)
                     Text(
                         text = detail,
-                        color = Color.Gray,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row {
                         tags.forEach {
                             Text(
                                 text = "#$it",
-                                color = Color(0xFF21BECE),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -243,15 +258,15 @@ fun ExpenditureCard(
 fun ExpenditureTagSelector(
     modifier: Modifier = Modifier,
     expenditureTags: List<ExpenditureTagEntity>,
-    selectedTas: MutableMap<String, ExpenditureTagEntity>
+    selectedTas: MutableMap<String, ExpenditureTagEntity>,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier
+                .heightIn(max = 300.dp)
         ) {
             items(expenditureTags) { expenditureTag ->
                 ExpenditureTagSelectorItem(
@@ -275,7 +290,7 @@ fun ExpenditureTagSelectorItem(
     modifier: Modifier = Modifier,
     expenditureTag: ExpenditureTagEntity,
     selected: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -285,9 +300,12 @@ fun ExpenditureTagSelectorItem(
             .padding(4.dp)
             .clip(shape = MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
-            .background(color = if (!selected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
+            .background(color = if (!selected) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.onPrimary)
     ) {
-        Text(text = expenditureTag.name, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = expenditureTag.name,
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 
 }
@@ -300,11 +318,8 @@ fun TagSelectorPreview() {
         ExpenditureTagEntity(key = "2", name = "Tag2"),
         ExpenditureTagEntity(key = "3", name = "Tag3"),
         ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "4", name = "Tag4")
+        ExpenditureTagEntity(key = "5", name = "Tag5"),
+        ExpenditureTagEntity(key = "6", name = "Tag6"),
     )
     var selectedTas = remember { mutableStateMapOf<String, ExpenditureTagEntity>() }
 

@@ -8,6 +8,12 @@ import com.non.k4r.module.common.dao.RecordDao
 import com.non.k4r.module.common.entity.RecordEntity
 import com.non.k4r.module.expenditure.dao.ExpenditureTagDao
 import com.non.k4r.module.expenditure.entity.ExpenditureTagEntity
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.DefineComponent
+import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityComponent
+import javax.inject.Singleton
 
 @Database(entities = [RecordEntity::class, ExpenditureTagEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
@@ -29,5 +35,14 @@ abstract class AppDatabase : RoomDatabase() {
                 instance
             }
         }
+    }
+}
+
+@Module
+@InstallIn(ActivityComponent::class)
+object DatabaseModule {
+    @Provides
+    fun expenditureTagDao(database: AppDatabase): ExpenditureTagDao {
+        return database.expenditureTagDao()
     }
 }

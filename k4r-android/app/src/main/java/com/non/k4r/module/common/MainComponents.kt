@@ -43,7 +43,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.non.k4r.R
-import com.non.k4r.module.expenditure.ExpenditureCard
+import com.non.k4r.module.expenditure.component.ExpenditureCard
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime

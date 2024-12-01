@@ -4,8 +4,10 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.non.k4r.module.common.entity.RecordEntity
+import javax.inject.Singleton
 
 @Dao
+@Singleton
 interface RecordDao {
     @Insert
     suspend fun insert(record: RecordEntity)

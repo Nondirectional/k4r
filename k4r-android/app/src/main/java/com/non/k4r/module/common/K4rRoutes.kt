@@ -7,4 +7,4 @@ import kotlinx.serialization.Serializable;
 object MainRoute
 
 @Serializable
-data class ExpenditureSubmitRoute(val expenditureTags:List<ExpenditureTagEntity>)
+object ExpenditureSubmitRoute
