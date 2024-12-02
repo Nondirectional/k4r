@@ -1,24 +1,20 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
 
     kotlin("plugin.serialization") version "2.0.21"
     id("com.google.devtools.ksp")
 }
 
 android {
-    namespace = "com.non.k4r"
-    compileSdk = 35
+    namespace = "com.non.k4r.core.data"
+    compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.non.k4r"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -37,37 +33,23 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
-    implementation(project(":core:data"))
+    implementation(libs.inject.javax.inject)
 
-
+    // Dependency injection
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.room.runtime) // Room 核心库
     ksp(libs.androidx.room.compiler) // Room 编译器
     implementation(libs.androidx.room.ktx) // Kotlin 扩展
-
-    implementation(libs.navigation.compose)
-    implementation(libs.androidx.navigation.ui)
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
+
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 }
-

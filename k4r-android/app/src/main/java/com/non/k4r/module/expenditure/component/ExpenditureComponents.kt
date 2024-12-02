@@ -44,10 +44,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.non.k4r.R
+import com.non.k4r.core.data.database.dao.ExpenditureTagDao
+import com.non.k4r.core.data.database.model.ExpenditureTagEntity
 import com.non.k4r.module.common.K4rTextField
 import com.non.k4r.module.expenditure.ExpenditureType
-import com.non.k4r.module.expenditure.dao.ExpenditureTagDao
-import com.non.k4r.module.expenditure.entity.ExpenditureTagEntity
 import com.non.k4r.ui.theme.AppTheme
 import java.util.Locale
 import kotlin.math.abs
@@ -308,20 +308,4 @@ fun ExpenditureTagSelectorItem(
         )
     }
 
-}
-
-@Preview
-@Composable
-fun TagSelectorPreview() {
-    val expenditureTags = listOf<ExpenditureTagEntity>(
-        ExpenditureTagEntity(key = "1", name = "Tag1"),
-        ExpenditureTagEntity(key = "2", name = "Tag2"),
-        ExpenditureTagEntity(key = "3", name = "Tag3"),
-        ExpenditureTagEntity(key = "4", name = "Tag4"),
-        ExpenditureTagEntity(key = "5", name = "Tag5"),
-        ExpenditureTagEntity(key = "6", name = "Tag6"),
-    )
-    var selectedTas = remember { mutableStateMapOf<String, ExpenditureTagEntity>() }
-
-    ExpenditureTagSelector(expenditureTags = expenditureTags, selectedTas = selectedTas)
 }

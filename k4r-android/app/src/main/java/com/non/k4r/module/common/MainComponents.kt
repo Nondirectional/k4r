@@ -173,7 +173,7 @@ fun DrawerItemButton(
 fun TimelineScreen(modifier: Modifier) {
     Surface(modifier = modifier) {
         val list = (1..100).toList()
-        LazyColumn() {
+        LazyColumn {
             items(list) { number ->
                 Column {
                     RecordCard(datetime = LocalDateTime.now()) {

@@ -1,4 +1,4 @@
-package com.non.k4r.module.expenditure.entity
+package com.non.k4r.core.data.database.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
