@@ -17,7 +17,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,33 +32,64 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.non.k4r.R
-import com.non.k4r.core.data.database.model.ExpenditureTagEntity
+import com.non.k4r.core.data.database.constant.ExpenditureType
+import com.non.k4r.core.data.database.model.ExpenditureTag
+import com.non.k4r.module.common.K4rDatePickerDialog
 import com.non.k4r.module.common.K4rTextField
-import com.non.k4r.module.expenditure.ExpenditureType
 import com.non.k4r.module.expenditure.vm.ExpenditureSubmitScreenViewModel
 import com.non.k4r.ui.theme.AppTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.log
 
 const val TAG: String = "Expenditure"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenditureSubmitScreen(
     modifier: Modifier = Modifier,
     viewModel: ExpenditureSubmitScreenViewModel = hiltViewModel<ExpenditureSubmitScreenViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
     AppTheme {
+        val focusManager = LocalFocusManager.current
+
+        if (uiState.datePickerDialogDisplayFlag) {
+            K4rDatePickerDialog(
+                onDateSelected = { millis ->
+                    if (millis != null) {
+                        try {
+                            val date = Instant
+                                .ofEpochMilli(millis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                            viewModel.onDateSuccessfulSelected(date)
+                        } catch (_: Exception) {
+                        }
+                    }
+                    viewModel.displayDatePickerDialog(false)
+                    focusManager
+                },
+                onDismiss = {
+                    viewModel.displayDatePickerDialog(false)
+                    focusManager.clearFocus(true)
+                })
+        }
         Surface(
             modifier = modifier
                 .fillMaxSize()
@@ -103,7 +137,27 @@ fun ExpenditureSubmitScreen(
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
-
+                    K4rTextField(
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null
+                            )
+                        },
+                        value = uiState.date?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) ?: "",
+                        label = "日期",
+                        placeholder = "请选择一个日期",
+                        readOnly = true,
+                        onValueChange = {},
+                        onClick = { Log.d(TAG, "ExpenditureSubmitScreen: Click") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    viewModel.displayDatePickerDialog(true)
+                                }
+                            }
+                    )
                     Spacer(Modifier.padding(vertical = 4.dp))
                     Row(modifier = modifier.clip(shape = MaterialTheme.shapes.small)) {
                         Box(
@@ -232,9 +286,9 @@ fun ExpenditureCard(
 @Composable
 fun ExpenditureTagSelector(
     modifier: Modifier = Modifier,
-    expenditureTags: List<ExpenditureTagEntity>,
-    selectedTags: Map<String, ExpenditureTagEntity>,
-    onTagClick: (ExpenditureTagEntity, Boolean) -> Unit,
+    expenditureTags: List<ExpenditureTag>,
+    selectedTags: Map<String, ExpenditureTag>,
+    onTagClick: (ExpenditureTag, Boolean) -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -264,7 +318,7 @@ fun ExpenditureTagSelector(
 @Composable
 fun ExpenditureTagSelectorItem(
     modifier: Modifier = Modifier,
-    expenditureTag: ExpenditureTagEntity,
+    expenditureTag: ExpenditureTag,
     selected: Boolean = false,
     onClick: () -> Unit,
 ) {

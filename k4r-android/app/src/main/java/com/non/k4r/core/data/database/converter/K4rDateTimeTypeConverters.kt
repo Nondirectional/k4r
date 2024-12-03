@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.non.k4r.core.data.database
+package com.non.k4r.core.data.database.converter
 
 import androidx.room.TypeConverter
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.let
 
-/**
- * Room [TypeConverter] functions for various `java.time.*` classes.
- */
-object DateTimeTypeConverters {
+object K4rDateTimeTypeConverters {
     @TypeConverter
     @JvmStatic
     fun toOffsetDateTime(value: String?): OffsetDateTime? {
@@ -49,6 +47,18 @@ object DateTimeTypeConverters {
     @JvmStatic
     fun fromLocalDateTime(value: LocalDateTime?): String? {
         return value?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    }
+
+    @TypeConverter
+    @JvmStatic
+    fun toLocalDate(value: String?): LocalDate? {
+        return value?.let { LocalDate.parse(value) }
+    }
+
+    @TypeConverter
+    @JvmStatic
+    fun fromLocalDate(value: LocalDate?): String? {
+        return value?.format(DateTimeFormatter.ISO_LOCAL_DATE)
     }
 
     @TypeConverter

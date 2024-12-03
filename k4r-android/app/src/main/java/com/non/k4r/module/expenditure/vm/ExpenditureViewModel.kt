@@ -5,13 +5,14 @@ import androidx.compose.ui.focus.FocusState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
-import com.non.k4r.core.data.database.model.ExpenditureTagEntity
-import com.non.k4r.module.expenditure.ExpenditureType
+import com.non.k4r.core.data.database.model.ExpenditureTag
+import com.non.k4r.core.data.database.constant.ExpenditureType
 import com.non.k4r.module.expenditure.component.TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.Locale
 import javax.inject.Inject
 
@@ -76,16 +77,24 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(expenditureType = expenditureType)
     }
 
-    fun onTagSelected(tag: ExpenditureTagEntity) {
+    fun onTagSelected(tag: ExpenditureTag) {
         val selectedTags = _uiState.value.selectedTags.toMutableMap()
         selectedTags[tag.key] = tag
         _uiState.value = _uiState.value.copy(selectedTags = selectedTags)
     }
 
-    fun onTagDeselected(tag: ExpenditureTagEntity) {
+    fun onTagDeselected(tag: ExpenditureTag) {
         val selectedTags = _uiState.value.selectedTags.toMutableMap()
         selectedTags.remove(tag.key)
         _uiState.value = _uiState.value.copy(selectedTags = selectedTags)
+    }
+
+    fun displayDatePickerDialog(display: Boolean) {
+        _uiState.value = _uiState.value.copy(datePickerDialogDisplayFlag = display)
+    }
+
+    fun onDateSuccessfulSelected(date: LocalDate) {
+        _uiState.value = _uiState.value.copy(date = date)
     }
 
     fun onSubmitClicked() {
@@ -94,10 +103,12 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
 }
 
 data class ExpenditureSubmitScreenUiState(
-    var tags: List<ExpenditureTagEntity> = emptyList<ExpenditureTagEntity>(),
+    var datePickerDialogDisplayFlag: Boolean = false,
+    var date: LocalDate? = null,
+    var tags: List<ExpenditureTag> = emptyList<ExpenditureTag>(),
     var amount: String = "",
     var introduction: String = "",
     var remark: String = "",
     var expenditureType: ExpenditureType = ExpenditureType.Expenditure,
-    var selectedTags: Map<String, ExpenditureTagEntity> = mutableMapOf<String, ExpenditureTagEntity>(),
+    var selectedTags: Map<String, ExpenditureTag> = mutableMapOf<String, ExpenditureTag>(),
 )

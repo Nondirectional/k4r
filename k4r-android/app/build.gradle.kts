@@ -61,7 +61,6 @@ dependencies {
     implementation(libs.androidx.room.ktx)
 
     // Navigation
-    implementation(libs.androidx.room.runtime)
     implementation(libs.navigation.compose)
     implementation(libs.androidx.navigation.ui)
 
