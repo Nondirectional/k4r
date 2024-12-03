@@ -3,7 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 
     kotlin("plugin.serialization") version "2.0.21"
-    id("com.google.devtools.ksp")
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -15,6 +16,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+//        kapt {
+//            arguments {
+//                arg("room.schemaLocation", "$projectDir/schemas")
+//            }
+//        }
     }
 
     buildTypes {
@@ -34,15 +41,15 @@ android {
         jvmTarget = "11"
     }
 }
-
 dependencies {
-    implementation(libs.inject.javax.inject)
-
     // Dependency injection
-    ksp(libs.hilt.compiler)
-    implementation(libs.androidx.room.runtime) // Room 核心库
-    ksp(libs.androidx.room.compiler) // Room 编译器
-    implementation(libs.androidx.room.ktx) // Kotlin 扩展
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
 
@@ -52,4 +59,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+kapt {
+    correctErrorTypes = true
 }

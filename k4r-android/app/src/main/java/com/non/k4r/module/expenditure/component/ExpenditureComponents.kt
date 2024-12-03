@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
@@ -24,13 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -40,14 +34,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.non.k4r.R
-import com.non.k4r.core.data.database.dao.ExpenditureTagDao
 import com.non.k4r.core.data.database.model.ExpenditureTagEntity
 import com.non.k4r.module.common.K4rTextField
 import com.non.k4r.module.expenditure.ExpenditureType
+import com.non.k4r.module.expenditure.vm.ExpenditureSubmitScreenViewModel
 import com.non.k4r.ui.theme.AppTheme
 import java.util.Locale
 import kotlin.math.abs
@@ -57,19 +51,9 @@ const val TAG: String = "Expenditure"
 @Composable
 fun ExpenditureSubmitScreen(
     modifier: Modifier = Modifier,
-    expenditureTagDao: ExpenditureTagDao,
+    viewModel: ExpenditureSubmitScreenViewModel = hiltViewModel<ExpenditureSubmitScreenViewModel>(),
 ) {
-//    val tagListViewModel: ExpenditureTagListViewModel = viewModel()
-    val displayTags by tagListViewModel.tags.collectAsState()
-    LaunchedEffect(true) {
-        tagListViewModel.loadTags(dao = expenditureTagDao)
-    }
-
-    var introduction by remember { mutableStateOf("") }
-    var remark by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var expenditureType by remember { mutableStateOf(ExpenditureType.Expenditure) }
-    var selectedTas = remember { mutableStateMapOf<String, ExpenditureTagEntity>() }
+    val uiState by viewModel.uiState.collectAsState()
 
     AppTheme {
         Surface(
@@ -96,53 +80,26 @@ fun ExpenditureSubmitScreen(
                     K4rTextField(
                         placeholder = "请输入金额",
                         label = "金额",
-                        onValueChange = {
-                            try {
-                                amount = if (it.isBlank())
-                                    it
-                                else
-                                    "-?(0|[1-9]?[0-9]+)+\\.?([0-9]+)?".toRegex()
-                                        .find(it)?.value ?: amount
-                            } catch (e: Exception) {
-                                Log.e(TAG, "ExpenditureSubmitScreen: fail", e)
-                            }
-                        },
-                        value = amount,
+                        onValueChange = viewModel::onAmountChanged,
+                        value = uiState.amount,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .onFocusEvent {
-                                if (!it.hasFocus) {
-                                    if (!amount.isBlank())
-                                        amount = try {
-                                            String.format(
-                                                locale = Locale.getDefault(),
-                                                format = "%.2f",
-                                                amount.toFloat()
-                                            )
-                                        } catch (_: Exception) {
-                                            "0.00"
-                                        }
-                                }
-                            },
+                            .onFocusEvent(onFocusEvent = viewModel::onAmountFocusEvent),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        keyboardActions = KeyboardActions(onDone = {
-                            amount =
-                                String.format(locale = Locale.getDefault(), format = "%.2f", amount)
-                        })
                     )
                     K4rTextField(
                         placeholder = "请输入简介",
                         label = "简介",
-                        onValueChange = { introduction = it },
-                        value = introduction,
+                        onValueChange = viewModel::onIntroductionChanged,
+                        value = uiState.introduction,
                         modifier = Modifier.fillMaxWidth()
 
                     )
                     K4rTextField(
                         placeholder = "请输入备注",
                         label = "备注",
-                        onValueChange = { remark = it },
-                        value = remark,
+                        onValueChange = viewModel::onRemarkChanged,
+                        value = uiState.remark,
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -155,9 +112,9 @@ fun ExpenditureSubmitScreen(
                                 .weight(0.5f)
                                 .heightIn(min = 50.dp)
                                 .clickable(onClick = {
-                                    expenditureType = ExpenditureType.Expenditure
+                                    viewModel.onExpenditureTypeChanged(ExpenditureType.Expenditure)
                                 })
-                                .background(color = if (expenditureType == ExpenditureType.Expenditure) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
+                                .background(color = if (uiState.expenditureType == ExpenditureType.Expenditure) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
                         ) {
                             Text(fontSize = 24.sp, text = "支出")
                         }
@@ -168,16 +125,26 @@ fun ExpenditureSubmitScreen(
                                 .weight(0.5f)
                                 .heightIn(min = 50.dp)
                                 .clickable(onClick = {
-                                    expenditureType = ExpenditureType.Income
+                                    viewModel.onExpenditureTypeChanged(ExpenditureType.Income)
                                 })
-                                .background(color = if (expenditureType == ExpenditureType.Income) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
+                                .background(color = if (uiState.expenditureType == ExpenditureType.Income) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
                         ) {
                             Text(fontSize = 24.sp, text = "支出")
                         }
                     }
 
                     Spacer(modifier.padding(top = 4.dp))
-                    ExpenditureTagSelector(expenditureTags = displayTags, selectedTas = selectedTas)
+                    ExpenditureTagSelector(
+                        expenditureTags = uiState.tags,
+                        selectedTags = uiState.selectedTags,
+                        onTagClick = { expenditureTag, selected ->
+                            if (selected) {
+                                viewModel.onTagSelected(expenditureTag)
+                            } else {
+                                viewModel.onTagDeselected(expenditureTag)
+                            }
+                        },
+                    )
                 }
                 ElevatedButton(
                     modifier = Modifier
@@ -191,6 +158,7 @@ fun ExpenditureSubmitScreen(
         }
     }
 }
+
 
 @Composable
 fun ExpenditureCard(
@@ -235,19 +203,26 @@ fun ExpenditureCard(
                     }
                 }
 
-                Text(
-                    text = "${if (amount < 0) "-" else "+"} ${
-                        String.format(
-                            locale = Locale.getDefault(),
-                            format = "%.2f",
-                            abs(amount)
-                        )
-                    }",
-                    fontSize = 18.sp,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (amount > 0) Color.Red else Color(0xFF008000),
-                    modifier = Modifier.weight(0.3f)
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(0.3f)
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Text(
+                        text = "${if (amount < 0) "-" else "+"} ${
+                            String.format(
+                                locale = Locale.getDefault(),
+                                format = "%.2f",
+                                abs(amount)
+                            )
+                        }",
+                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (amount > 0) Color.Red else Color(0xFF008000),
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                }
             }
 
         }
@@ -258,7 +233,8 @@ fun ExpenditureCard(
 fun ExpenditureTagSelector(
     modifier: Modifier = Modifier,
     expenditureTags: List<ExpenditureTagEntity>,
-    selectedTas: MutableMap<String, ExpenditureTagEntity>,
+    selectedTags: Map<String, ExpenditureTagEntity>,
+    onTagClick: (ExpenditureTagEntity, Boolean) -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -271,12 +247,12 @@ fun ExpenditureTagSelector(
             items(expenditureTags) { expenditureTag ->
                 ExpenditureTagSelectorItem(
                     expenditureTag = expenditureTag,
-                    selected = selectedTas.contains(expenditureTag.key),
+                    selected = selectedTags.contains(expenditureTag.key),
                     onClick = {
-                        if (selectedTas.contains(expenditureTag.key)) {
-                            selectedTas.remove(expenditureTag.key)
+                        if (selectedTags.contains(expenditureTag.key)) {
+                            onTagClick(expenditureTag, false)
                         } else {
-                            selectedTas[expenditureTag.key] = expenditureTag
+                            onTagClick(expenditureTag, true)
                         }
                     }
                 )

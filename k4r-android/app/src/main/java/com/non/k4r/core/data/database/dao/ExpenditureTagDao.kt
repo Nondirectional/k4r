@@ -1,8 +1,6 @@
 package com.non.k4r.core.data.database.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.non.k4r.core.data.database.model.ExpenditureTagEntity
 
@@ -12,5 +10,5 @@ interface ExpenditureTagDao : BaseDao<ExpenditureTagEntity> {
     suspend fun get(id: Int): ExpenditureTagEntity?
 
     @Query("SELECT * FROM k4r_expenditure_tags")
-    suspend fun getAllTags(): List<ExpenditureTagEntity>
+    suspend fun getAll(): List<ExpenditureTagEntity>
 }

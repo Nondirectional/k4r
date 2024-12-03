@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "k4r"
 include(":app")
-include(":core:data")
