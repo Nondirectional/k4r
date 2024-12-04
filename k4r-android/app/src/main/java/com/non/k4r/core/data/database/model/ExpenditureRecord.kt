@@ -3,17 +3,16 @@ package com.non.k4r.core.data.database.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
 import com.non.k4r.core.data.database.constant.ExpenditureType
-import com.non.k4r.core.data.database.converter.K4rDateTimeTypeConverters
-import kotlinx.serialization.Serializable
 import java.time.LocalDate
-import java.time.OffsetDateTime
 
 @Entity(tableName = "k4r_expenditure_records")
 data class ExpenditureRecord(
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0L,
+
+    @ColumnInfo(name = "record_id")
+    var recordId: Long? = null,
 
     @ColumnInfo(name = "remote_id")
     var remoteId: Long? = null,

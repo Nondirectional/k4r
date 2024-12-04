@@ -4,13 +4,19 @@ import android.util.Log
 import androidx.compose.ui.focus.FocusState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.Dao
-import com.non.k4r.core.data.database.dao.ExpenditureTagDao
-import com.non.k4r.core.data.database.model.ExpenditureTag
 import com.non.k4r.core.data.database.constant.ExpenditureType
+import com.non.k4r.core.data.database.constant.RecordType
 import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
-import com.non.k4r.module.expenditure.component.TAG
+import com.non.k4r.core.data.database.dao.ExpenditureRecordTagDao
+import com.non.k4r.core.data.database.dao.ExpenditureTagDao
+import com.non.k4r.core.data.database.dao.RecordDao
+import com.non.k4r.core.data.database.model.ExpenditureRecord
+import com.non.k4r.core.data.database.model.ExpenditureRecordTag
+import com.non.k4r.core.data.database.model.ExpenditureTag
+import com.non.k4r.core.data.database.model.Record
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,12 +24,17 @@ import java.time.LocalDate
 import java.util.Locale
 import javax.inject.Inject
 
+
 @HiltViewModel
 class ExpenditureSubmitScreenViewModel @Inject constructor(
     private val expenditureTagDao: ExpenditureTagDao,
+    private val recordDao: RecordDao,
     private val expenditureRecordDao: ExpenditureRecordDao,
-    private val expenditureRecordTagDao: Dao
+    private val expenditureRecordTagDao: ExpenditureRecordTagDao
 ) : ViewModel() {
+
+    val TAG: String = "ExpenditureSubmitScreenViewModel"
+
     private val _uiState =
         MutableStateFlow<ExpenditureSubmitScreenUiState>(ExpenditureSubmitScreenUiState())
     val uiState: StateFlow<ExpenditureSubmitScreenUiState> = _uiState
@@ -102,14 +113,47 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
     }
 
     fun onSubmitClicked() {
+        val selectedTags: List<ExpenditureTag> = _uiState.value.selectedTags.values.toList()
 
-        // TODO: Implement submission logic
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val recordId = recordDao.insert(Record(type = RecordType.Expenditure))
+
+                val expenditureRecordId = expenditureRecordDao.insert(
+                    ExpenditureRecord(
+                        recordId = recordId,
+                        recordDate = _uiState.value.date!!,
+                        amount = (_uiState.value.amount.toFloat() * 100).toLong(),
+                        introduction = _uiState.value.introduction,
+                        remark = _uiState.value.remark,
+                        expenditureType = _uiState.value.expenditureType
+                    )
+                )
+                Log.d(
+                    TAG,
+                    "onSubmitClicked: expenditure record inserted, id: $expenditureRecordId"
+                )
+                if (selectedTags.isNotEmpty()) {
+                    expenditureRecordTagDao.insertAll(selectedTags.map {
+                        ExpenditureRecordTag(
+                            recordId = expenditureRecordId, tagId = it.id,
+                        )
+                    })
+                }
+                Log.d(TAG, "onSubmitClicked: expenditure record and tags inserted")
+                _uiState.value = _uiState.value.copy(isSubmissionSuccess = true)
+            } catch (e: Exception) {
+                Log.e(TAG, "onSubmitClicked: fail", e)
+                _uiState.value = _uiState.value.copy(isSubmissionSuccess = false)
+            }
+        }
     }
 }
 
 data class ExpenditureSubmitScreenUiState(
     var datePickerDialogDisplayFlag: Boolean = false,
-    var date: LocalDate? = null,
+    var isSubmissionSuccess: Boolean? = null,
+    var date: LocalDate? = LocalDate.now(),
     var tags: List<ExpenditureTag> = emptyList<ExpenditureTag>(),
     var amount: String = "",
     var introduction: String = "",

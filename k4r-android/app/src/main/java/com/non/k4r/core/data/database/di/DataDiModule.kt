@@ -6,6 +6,7 @@ import com.non.k4r.core.data.database.AppDatabase
 import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
 import com.non.k4r.core.data.database.dao.ExpenditureRecordTagDao
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
+import com.non.k4r.core.data.database.dao.RecordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +27,11 @@ object DataDiModule {
             // showcase all of Room.
             .fallbackToDestructiveMigration()
             .build()
+    @Provides
+    @Singleton
+    fun provideRecordDao(
+        database: AppDatabase
+    ): RecordDao = database.recordDao()
 
     @Provides
     @Singleton

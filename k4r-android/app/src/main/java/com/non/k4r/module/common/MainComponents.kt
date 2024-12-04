@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,15 +45,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.non.k4r.R
+import com.non.k4r.core.data.database.model.ExpenditureRecordWithTags
 import com.non.k4r.module.expenditure.component.ExpenditureCard
+import com.non.k4r.module.expenditure.vm.MainScreenViewModel
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier, onNavigateToExpenditureSubmit: () -> Unit) {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToExpenditureSubmit: () -> Unit,
+    viewModel: MainScreenViewModel = hiltViewModel<MainScreenViewModel>(),
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
     AppTheme {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -112,14 +124,16 @@ fun MainScreen(modifier: Modifier = Modifier, onNavigateToExpenditureSubmit: () 
                         modifier.padding(
                             top = innerPadding.calculateTopPadding(),
                             bottom = innerPadding.calculateBottomPadding()
-                        )
+                        ),
+                        expenditureRecords = uiState.expenditureList
                     )
                 },
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
                             Log.d("MainActivity", "navigate to ExpenditureSubmitScreen")
-                            onNavigateToExpenditureSubmit() },
+                            onNavigateToExpenditureSubmit()
+                        },
                         shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -170,18 +184,20 @@ fun DrawerItemButton(
 }
 
 @Composable
-fun TimelineScreen(modifier: Modifier) {
+fun TimelineScreen(
+    modifier: Modifier,
+    expenditureRecords: List<ExpenditureRecordWithTags> = emptyList()
+) {
     Surface(modifier = modifier) {
-        val list = (1..100).toList()
         LazyColumn {
-            items(list) { number ->
+            items(expenditureRecords) { record ->
                 Column {
                     RecordCard(datetime = LocalDateTime.now()) {
                         ExpenditureCard(
-                            title = "购物",
-                            amount = -10.0,
-                            tags = listOf("购物", "超市"),
-                            detail = "购买超市购物券"
+                            introduction = record.expenditureRecord.introduction,
+                            amount = record.expenditureRecord.amount / 100.0,
+                            tags = record.tags.map { it.name },
+                            remark = record.expenditureRecord.remark
                         )
                     }
                 }

@@ -24,11 +24,14 @@ class MainActivity : ComponentActivity() {
             NavHost(navController = navController, startDestination = MainRoute) {
                 composable<MainRoute> {
                     MainScreen(onNavigateToExpenditureSubmit = {
-
                         navController.navigate(route = ExpenditureSubmitRoute)
                     })
                 }
-                composable<ExpenditureSubmitRoute> { ExpenditureSubmitScreen() }
+                composable<ExpenditureSubmitRoute> {
+                    ExpenditureSubmitScreen(onSubmitSuccess = {
+                        navController.popBackStack()
+                    })
+                }
             }
         }
     }

@@ -50,12 +50,10 @@ import com.non.k4r.module.common.K4rTextField
 import com.non.k4r.module.expenditure.vm.ExpenditureSubmitScreenViewModel
 import com.non.k4r.ui.theme.AppTheme
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.log
 
 const val TAG: String = "Expenditure"
 
@@ -63,6 +61,7 @@ const val TAG: String = "Expenditure"
 @Composable
 fun ExpenditureSubmitScreen(
     modifier: Modifier = Modifier,
+    onSubmitSuccess: () -> Unit,
     viewModel: ExpenditureSubmitScreenViewModel = hiltViewModel<ExpenditureSubmitScreenViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -204,8 +203,7 @@ fun ExpenditureSubmitScreen(
                     modifier = Modifier
                         .padding(16.dp)
                         .align(alignment = BiasAlignment(0.95f, 1.0f)),
-                    onClick = {
-                    }) {
+                    onClick = viewModel::onSubmitClicked) {
                     Text("确认")
                 }
             }
@@ -217,10 +215,10 @@ fun ExpenditureSubmitScreen(
 @Composable
 fun ExpenditureCard(
     modifier: Modifier = Modifier,
-    title: String,
+    introduction: String,
     amount: Double,
     tags: List<String>,
-    detail: String,
+    remark: String,
 ) {
     AppTheme {
         Surface(
@@ -242,9 +240,9 @@ fun ExpenditureCard(
                 )
 
                 Column(Modifier.weight(0.5f)) {
-                    Text(text = title, style = MaterialTheme.typography.titleMedium)
+                    Text(text = introduction, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = detail,
+                        text = remark,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Row {

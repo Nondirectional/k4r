@@ -6,24 +6,10 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 
-@Entity(
-    tableName = "k4r_expenditure_record_tag_rel",
-    foreignKeys = [
-        ForeignKey(
-            entity = ExpenditureRecord::class,
-            parentColumns = ["id"],
-            childColumns = ["record_id"]
-        ),
-        ForeignKey(
-            entity = ExpenditureRecordTag::class,
-            parentColumns = ["id"],
-            childColumns = ["tag_id"]
-        )
-    ]
-)
+@Entity(tableName = "k4r_expenditure_record_tag_rel")
 data class ExpenditureRecordTag(
     @PrimaryKey(autoGenerate = true)
-    var id: Long,
+    var id: Long = 0L,
 
     @ColumnInfo(name = "record_id")
     var recordId: Long,
