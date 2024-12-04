@@ -143,7 +143,8 @@ fun ExpenditureSubmitScreen(
                                 contentDescription = null
                             )
                         },
-                        value = uiState.date?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) ?: "",
+                        value = uiState.date?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
+                            ?: "",
                         label = "日期",
                         placeholder = "请选择一个日期",
                         readOnly = true,
@@ -203,7 +204,9 @@ fun ExpenditureSubmitScreen(
                     modifier = Modifier
                         .padding(16.dp)
                         .align(alignment = BiasAlignment(0.95f, 1.0f)),
-                    onClick = viewModel::onSubmitClicked) {
+                    onClick = {
+                        viewModel.onSubmitClicked(onSubmitSuccess)
+                    }) {
                     Text("确认")
                 }
             }

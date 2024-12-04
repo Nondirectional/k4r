@@ -22,10 +22,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             NavHost(navController = navController, startDestination = MainRoute) {
-                composable<MainRoute> {
-                    MainScreen(onNavigateToExpenditureSubmit = {
-                        navController.navigate(route = ExpenditureSubmitRoute)
-                    })
+                composable<MainRoute> { backStackEntry ->
+                    MainScreen(navController = navController,
+                        onNavigateToExpenditureSubmit = {
+                            navController.navigate(route = ExpenditureSubmitRoute)
+                        })
                 }
                 composable<ExpenditureSubmitRoute> {
                     ExpenditureSubmitScreen(onSubmitSuccess = {

@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
-    expenditureRecordDao: ExpenditureRecordDao
+    private val expenditureRecordDao: ExpenditureRecordDao
 ) : ViewModel() {
     val TAG: String = "MainScreenViewModel"
 
@@ -23,10 +23,12 @@ class MainScreenViewModel @Inject constructor(
     val uiState: StateFlow<MainScreenUiState> = _uiState
 
     init {
+        reloadRecords()
+    }
+
+    fun reloadRecords() {
         viewModelScope.launch {
-            val expenditureList: List<ExpenditureRecordWithTags> =
-                expenditureRecordDao.listAllWithTags()
-            _uiState.value = _uiState.value.copy(expenditureList = expenditureList)
+            _uiState.value = _uiState.value.copy(expenditureList = expenditureRecordDao.listAllWithTags())
         }
     }
 

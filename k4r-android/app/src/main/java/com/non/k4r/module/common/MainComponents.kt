@@ -36,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -46,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.non.k4r.R
 import com.non.k4r.core.data.database.model.ExpenditureRecordWithTags
 import com.non.k4r.module.expenditure.component.ExpenditureCard
@@ -58,11 +60,17 @@ import java.time.LocalDateTime
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
+    navController: NavController,
     onNavigateToExpenditureSubmit: () -> Unit,
     viewModel: MainScreenViewModel = hiltViewModel<MainScreenViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val backStackEntry = navController.currentBackStackEntry
 
+    LaunchedEffect(backStackEntry) {
+        // 每次进入 MainScreen 时调用 loadData
+        viewModel.reloadRecords()
+    }
     AppTheme {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()

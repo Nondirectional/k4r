@@ -112,7 +112,7 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(date = date)
     }
 
-    fun onSubmitClicked() {
+    fun onSubmitClicked(onSuccess: () -> Unit) {
         val selectedTags: List<ExpenditureTag> = _uiState.value.selectedTags.values.toList()
 
         CoroutineScope(Dispatchers.Main).launch {
@@ -141,6 +141,7 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
                     })
                 }
                 Log.d(TAG, "onSubmitClicked: expenditure record and tags inserted")
+                onSuccess()
                 _uiState.value = _uiState.value.copy(isSubmissionSuccess = true)
             } catch (e: Exception) {
                 Log.e(TAG, "onSubmitClicked: fail", e)
