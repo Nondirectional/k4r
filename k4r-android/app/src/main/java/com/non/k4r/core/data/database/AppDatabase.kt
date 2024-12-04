@@ -5,9 +5,11 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.non.k4r.core.data.database.converter.K4rDateTimeTypeConverters
 import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
+import com.non.k4r.core.data.database.dao.ExpenditureRecordTagDao
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
 import com.non.k4r.core.data.database.dao.RecordDao
 import com.non.k4r.core.data.database.model.ExpenditureRecord
+import com.non.k4r.core.data.database.model.ExpenditureRecordTag
 import com.non.k4r.core.data.database.model.ExpenditureTag
 import com.non.k4r.core.data.database.model.Record
 
@@ -15,7 +17,8 @@ import com.non.k4r.core.data.database.model.Record
     entities = [
         Record::class,
         ExpenditureTag::class,
-        ExpenditureRecord::class], version = 1,
+        ExpenditureRecord::class,
+        ExpenditureRecordTag::class], version = 1,
     exportSchema = false
 )
 @TypeConverters(K4rDateTimeTypeConverters::class)
@@ -23,4 +26,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recordDao(): RecordDao
     abstract fun expenditureTagDao(): ExpenditureTagDao
     abstract fun expenditureRecordDao(): ExpenditureRecordDao
+    abstract fun expenditureRecordTagDao(): ExpenditureRecordTagDao
 }

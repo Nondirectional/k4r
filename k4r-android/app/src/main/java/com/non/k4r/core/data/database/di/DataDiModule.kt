@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.non.k4r.core.data.database.AppDatabase
 import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
+import com.non.k4r.core.data.database.dao.ExpenditureRecordTagDao
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
 import dagger.Module
 import dagger.Provides
@@ -38,4 +39,9 @@ object DataDiModule {
         database: AppDatabase
     ): ExpenditureRecordDao = database.expenditureRecordDao()
 
+    @Provides
+    @Singleton
+    fun provideExpenditureRecordTagDao(
+        database: AppDatabase
+    ): ExpenditureRecordTagDao = database.expenditureRecordTagDao()
 }

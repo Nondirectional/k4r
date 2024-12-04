@@ -4,9 +4,11 @@ import android.util.Log
 import androidx.compose.ui.focus.FocusState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.Dao
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
 import com.non.k4r.core.data.database.model.ExpenditureTag
 import com.non.k4r.core.data.database.constant.ExpenditureType
+import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
 import com.non.k4r.module.expenditure.component.TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +20,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExpenditureSubmitScreenViewModel @Inject constructor(
-    private val expenditureTagDao: ExpenditureTagDao
+    private val expenditureTagDao: ExpenditureTagDao,
+    private val expenditureRecordDao: ExpenditureRecordDao,
+    private val expenditureRecordTagDao: Dao
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow<ExpenditureSubmitScreenUiState>(ExpenditureSubmitScreenUiState())
@@ -98,6 +102,7 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
     }
 
     fun onSubmitClicked() {
+
         // TODO: Implement submission logic
     }
 }
