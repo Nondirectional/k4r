@@ -9,7 +9,7 @@ import java.time.LocalDate
 @Entity(tableName = "k4r_expenditure_records")
 data class ExpenditureRecord(
     @PrimaryKey(autoGenerate = true)
-    var id: Long = 0L,
+    var expenditureRecordId: Long = 0L,
 
     @ColumnInfo(name = "record_id")
     var recordId: Long? = null,

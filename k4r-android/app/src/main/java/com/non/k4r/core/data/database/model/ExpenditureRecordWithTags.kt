@@ -7,8 +7,8 @@ import androidx.room.Relation
 data class ExpenditureRecordWithTags(
     @Embedded val expenditureRecord: ExpenditureRecord,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
+        parentColumn = "expenditureRecordId",
+        entityColumn = "expenditureRecordTagId",
         associateBy = Junction(ExpenditureRecordTag::class)
     )
     var tags: List<ExpenditureTag>

@@ -183,7 +183,7 @@ fun ExpenditureSubmitScreen(
                                 })
                                 .background(color = if (uiState.expenditureType == ExpenditureType.Income) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-                            Text(fontSize = 24.sp, text = "支出")
+                            Text(fontSize = 24.sp, text = "收入")
                         }
                     }
 

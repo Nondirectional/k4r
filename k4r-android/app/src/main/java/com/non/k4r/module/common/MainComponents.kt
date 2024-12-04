@@ -200,7 +200,7 @@ fun TimelineScreen(
         LazyColumn {
             items(expenditureRecords) { record ->
                 Column {
-                    RecordCard(datetime = LocalDateTime.now()) {
+                    RecordCard(datetime = record.expenditureRecord.recordDate) {
                         ExpenditureCard(
                             introduction = record.expenditureRecord.introduction,
                             amount = record.expenditureRecord.amount / 100.0,

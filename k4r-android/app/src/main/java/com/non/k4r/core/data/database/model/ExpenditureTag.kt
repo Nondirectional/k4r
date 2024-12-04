@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "k4r_expenditure_tags")
 data class ExpenditureTag(
     @PrimaryKey(autoGenerate = true)
-    var id: Long = 0L,
+    var expenditureRecordTagId: Long = 0L,
 
-    @ColumnInfo(name = "remote_id")
+    @ColumnInfo(name = "remoteId")
     var remoteId: Long? = null,
 
     @ColumnInfo(name = "key")

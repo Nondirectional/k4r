@@ -136,7 +136,7 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
                 if (selectedTags.isNotEmpty()) {
                     expenditureRecordTagDao.insertAll(selectedTags.map {
                         ExpenditureRecordTag(
-                            recordId = expenditureRecordId, tagId = it.id,
+                            expenditureRecordId = expenditureRecordId, expenditureRecordTagId = it.expenditureRecordTagId,
                         )
                     })
                 }
