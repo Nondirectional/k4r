@@ -6,4 +6,10 @@ import kotlinx.serialization.Serializable;
 object MainRoute
 
 @Serializable
+object FeatureCatalogRoute
+
+@Serializable
 object ExpenditureSubmitRoute
+
+@Serializable
+object TodoSubmitRoute

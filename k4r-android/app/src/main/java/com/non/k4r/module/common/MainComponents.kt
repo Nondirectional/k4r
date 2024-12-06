@@ -1,6 +1,5 @@
 package com.non.k4r.module.common
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -49,19 +48,21 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.non.k4r.R
-import com.non.k4r.core.data.database.model.ExpenditureRecordWithTags
+import com.non.k4r.core.data.database.constant.RecordType
+import com.non.k4r.module.common.model.RecordMainScreenVO
 import com.non.k4r.module.expenditure.component.ExpenditureCard
+import com.non.k4r.module.expenditure.model.ExpenditureRecordMainScreenVO
 import com.non.k4r.module.expenditure.vm.MainScreenViewModel
+import com.non.k4r.module.todo.TodoRecordMainScreenVO
+import com.non.k4r.module.todo.component.TodoCard
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 
 
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    onNavigateToExpenditureSubmit: () -> Unit,
     viewModel: MainScreenViewModel = hiltViewModel<MainScreenViewModel>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -133,15 +134,12 @@ fun MainScreen(
                             top = innerPadding.calculateTopPadding(),
                             bottom = innerPadding.calculateBottomPadding()
                         ),
-                        expenditureRecords = uiState.expenditureList
+                        records = uiState.records
                     )
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = {
-                            Log.d("MainActivity", "navigate to ExpenditureSubmitScreen")
-                            onNavigateToExpenditureSubmit()
-                        },
+                        onClick = { navController.navigate(FeatureCatalogRoute) },
                         shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -194,19 +192,45 @@ fun DrawerItemButton(
 @Composable
 fun TimelineScreen(
     modifier: Modifier,
-    expenditureRecords: List<ExpenditureRecordWithTags> = emptyList()
+    records: List<RecordMainScreenVO?> = emptyList()
 ) {
     Surface(modifier = modifier) {
         LazyColumn {
-            items(expenditureRecords) { record ->
+            items(records) { record ->
                 Column {
-                    RecordCard(datetime = record.expenditureRecord.recordDate) {
-                        ExpenditureCard(
-                            introduction = record.expenditureRecord.introduction,
-                            amount = record.expenditureRecord.amount / 100.0,
-                            tags = record.tags.map { it.name },
-                            remark = record.expenditureRecord.remark
-                        )
+                    RecordCard(
+                        date =
+                        when (record!!.type) {
+                            RecordType.Expenditure -> (record as ExpenditureRecordMainScreenVO).expenditureWithTags!!.expenditureRecord.expenditureDate
+                            else -> record.recordTime!!.toLocalDate()
+                        }
+                    ) {
+                        when (record.type) {
+                            RecordType.Expenditure -> {
+                                val recordImpl = record as ExpenditureRecordMainScreenVO
+                                ExpenditureCard(
+                                    introduction = recordImpl.expenditureWithTags!!.expenditureRecord.introduction,
+                                    amount = recordImpl.expenditureWithTags!!.expenditureRecord.amount / 100.0,
+                                    tags = recordImpl.expenditureWithTags!!.tags.map { it.name },
+                                    remark = recordImpl.expenditureWithTags!!.expenditureRecord.remark
+                                )
+                            }
+
+                            RecordType.Todo -> {
+                                val recordImpl = record as TodoRecordMainScreenVO
+
+                                TodoCard(
+                                    introduction = recordImpl.todoRecord!!.introduction,
+                                    modifier = Modifier.padding(16.dp),
+                                    remark = recordImpl.todoRecord!!.remark,
+                                    finished = recordImpl.todoRecord!!.isCompleted,
+                                    dueDate = recordImpl.todoRecord!!.dueDate,
+                                    onCheck = {},
+                                )
+                            }
+                            else -> throw IllegalArgumentException("Unknown record type")
+                        }
+
                     }
                 }
             }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.Locale
 import javax.inject.Inject
 
@@ -33,7 +34,7 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
     private val expenditureRecordTagDao: ExpenditureRecordTagDao
 ) : ViewModel() {
 
-    val TAG: String = "ExpenditureSubmitScreenViewModel"
+    private val TAG: String = "ExpenditureSubmitScreenViewModel"
 
     private val _uiState =
         MutableStateFlow<ExpenditureSubmitScreenUiState>(ExpenditureSubmitScreenUiState())
@@ -117,12 +118,17 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val recordId = recordDao.insert(Record(type = RecordType.Expenditure))
+                val recordId = recordDao.insert(
+                    Record(
+                        recordType = RecordType.Expenditure,
+                        recordTime = LocalDateTime.now()
+                    )
+                )
 
                 val expenditureRecordId = expenditureRecordDao.insert(
                     ExpenditureRecord(
                         recordId = recordId,
-                        recordDate = _uiState.value.date!!,
+                        expenditureDate = _uiState.value.date!!,
                         amount = (_uiState.value.amount.toFloat() * 100).toLong(),
                         introduction = _uiState.value.introduction,
                         remark = _uiState.value.remark,
@@ -136,7 +142,8 @@ class ExpenditureSubmitScreenViewModel @Inject constructor(
                 if (selectedTags.isNotEmpty()) {
                     expenditureRecordTagDao.insertAll(selectedTags.map {
                         ExpenditureRecordTag(
-                            expenditureRecordId = expenditureRecordId, expenditureRecordTagId = it.expenditureRecordTagId,
+                            expenditureRecordId = expenditureRecordId,
+                            expenditureRecordTagId = it.expenditureRecordTagId,
                         )
                     })
                 }

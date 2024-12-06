@@ -235,10 +235,10 @@ fun ExpenditureCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.baseline_currency_yuan_24),
+                    imageVector = ImageVector.vectorResource(R.drawable.baseline_payments_24),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(36.dp)
                         .weight(0.2f),
                 )
 

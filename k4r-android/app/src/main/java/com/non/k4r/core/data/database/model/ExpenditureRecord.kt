@@ -11,10 +11,10 @@ data class ExpenditureRecord(
     @PrimaryKey(autoGenerate = true)
     var expenditureRecordId: Long = 0L,
 
-    @ColumnInfo(name = "record_id")
+    @ColumnInfo(name = "recordId")
     var recordId: Long? = null,
 
-    @ColumnInfo(name = "remote_id")
+    @ColumnInfo(name = "remoteId")
     var remoteId: Long? = null,
 
     @ColumnInfo
@@ -26,9 +26,9 @@ data class ExpenditureRecord(
     @ColumnInfo(name = "remark")
     var remark: String = "",
 
-    @ColumnInfo(name = "record_date")
-    var recordDate: LocalDate,
+    @ColumnInfo(name = "expenditureDate")
+    var expenditureDate: LocalDate,
 
-    @ColumnInfo(name = "expenditure_type")
+    @ColumnInfo(name = "expenditureType")
     var expenditureType: ExpenditureType,
 )

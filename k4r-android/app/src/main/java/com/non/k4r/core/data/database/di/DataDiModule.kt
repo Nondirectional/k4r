@@ -6,7 +6,9 @@ import com.non.k4r.core.data.database.AppDatabase
 import com.non.k4r.core.data.database.dao.ExpenditureRecordDao
 import com.non.k4r.core.data.database.dao.ExpenditureRecordTagDao
 import com.non.k4r.core.data.database.dao.ExpenditureTagDao
+import com.non.k4r.core.data.database.dao.FeatureUsageHistoryDao
 import com.non.k4r.core.data.database.dao.RecordDao
+import com.non.k4r.core.data.database.dao.TodoRecordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,10 +25,9 @@ object DataDiModule {
         @ApplicationContext context: Context
     ): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "k4r_db")
-            // This is not recommended for normal apps, but the goal of this sample isn't to
-            // showcase all of Room.
             .fallbackToDestructiveMigration()
             .build()
+
     @Provides
     @Singleton
     fun provideRecordDao(
@@ -50,4 +51,16 @@ object DataDiModule {
     fun provideExpenditureRecordTagDao(
         database: AppDatabase
     ): ExpenditureRecordTagDao = database.expenditureRecordTagDao()
+
+    @Provides
+    @Singleton
+    fun provideFeatureUsageHistoryDao(
+        database: AppDatabase
+    ): FeatureUsageHistoryDao = database.featureUsageHistoryDao()
+
+    @Provides
+    @Singleton
+    fun provideTodoRecordDao(
+        database: AppDatabase
+    ): TodoRecordDao = database.todoRecordDao()
 }

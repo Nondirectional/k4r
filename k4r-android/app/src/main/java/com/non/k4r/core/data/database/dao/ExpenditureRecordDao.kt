@@ -18,6 +18,10 @@ interface ExpenditureRecordDao : BaseDao<ExpenditureRecord> {
     suspend fun getWithTags(id: Long): ExpenditureRecordWithTags?
 
     @Transaction
-    @Query("SELECT * FROM k4r_expenditure_records ORDER BY record_date,expenditureRecordId DESC")
+    @Query("SELECT * FROM k4r_expenditure_records WHERE recordId = :recordId")
+    suspend fun getWithTagsByRecordId(recordId: Long): ExpenditureRecordWithTags?
+
+    @Transaction
+    @Query("SELECT * FROM k4r_expenditure_records ORDER BY date(expenditureDate) DESC,expenditureRecordId DESC")
     suspend fun listAllWithTags(): List<ExpenditureRecordWithTags>
 }
