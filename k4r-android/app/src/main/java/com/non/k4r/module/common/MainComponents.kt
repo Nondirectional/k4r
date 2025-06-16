@@ -2,10 +2,12 @@ package com.non.k4r.module.common
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -76,25 +78,12 @@ fun MainScreen(
     val backStackEntry = navController.currentBackStackEntry
     val context = LocalContext.current
     
-    // 语音识别服务状态
-    val voiceService = remember { DashscopeVoiceService(context) }
-    val isListening by voiceService.isListening.collectAsState()
-    val partialResult by voiceService.partialResult.collectAsState()
-    val recognitionResult by voiceService.recognitionResult.collectAsState()
+    // 语音识别状态
+    var isListening by remember { mutableStateOf(false) }
+    var isPressed by remember { mutableStateOf(false) }
+    var partialResult by remember { mutableStateOf<String?>(null) }
     var showResult by remember { mutableStateOf(false) }
     var displayedResult by remember { mutableStateOf("") }
-    
-    // 处理识别结果
-    LaunchedEffect(recognitionResult) {
-        recognitionResult?.let { result ->
-            displayedResult = result
-            showResult = true
-            viewModel.processVoiceCommand(result)
-            // 显示结果3秒后自动隐藏
-            kotlinx.coroutines.delay(3000)
-            showResult = false
-        }
-    }
 
     LaunchedEffect(backStackEntry) {
         // 每次进入 MainScreen 时调用 loadData
@@ -172,9 +161,14 @@ fun MainScreen(
                         Column {
                             VoiceInputFab(
                                 onVoiceResult = { voiceText ->
-                                    displayedResult = voiceText
-                                    showResult = true
                                     viewModel.processVoiceCommand(voiceText)
+                                },
+                                onStateChange = { listening, pressed, partial, showRes, displayed ->
+                                    isListening = listening
+                                    isPressed = pressed
+                                    partialResult = partial
+                                    showResult = showRes
+                                    displayedResult = displayed
                                 },
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
@@ -199,6 +193,7 @@ fun MainScreen(
                     partialResult = partialResult,
                     finalResult = displayedResult,
                     showResult = showResult,
+                    isPressed = isPressed,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 80.dp) // 避免与TopBar重叠

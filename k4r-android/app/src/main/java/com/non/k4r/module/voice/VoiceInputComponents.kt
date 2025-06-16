@@ -41,6 +41,7 @@ import androidx.core.content.ContextCompat
 @Composable
 fun VoiceInputFab(
     onVoiceResult: (String) -> Unit,
+    onStateChange: (isListening: Boolean, isPressed: Boolean, partialResult: String?, showResult: Boolean, displayedResult: String) -> Unit = { _, _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -55,6 +56,8 @@ fun VoiceInputFab(
     var isPressed by remember { mutableStateOf(false) }
     var showResult by remember { mutableStateOf(false) }
     var displayedResult by remember { mutableStateOf("") }
+    var isProcessing by remember { mutableStateOf(false) } // 控制是否正在处理语音
+    var isWaitingForStop by remember { mutableStateOf(false) } // 控制释放后等待停止状态
     
     Log.d("VoiceInputFab", "初始权限状态: $hasPermission")
     
@@ -85,10 +88,27 @@ fun VoiceInputFab(
             displayedResult = result
             showResult = true
             onVoiceResult(result)
+            onStateChange(isListening, isPressed || isWaitingForStop, partialResult, showResult, displayedResult)
             // 显示结果3秒后自动隐藏
             delay(3000)
             showResult = false
+            onStateChange(isListening, isPressed || isWaitingForStop, partialResult, showResult, displayedResult)
         }
+    }
+    
+    // 监听停止录音状态，确保结果浮窗正确关闭
+    LaunchedEffect(isListening) {
+        if (!isListening && isProcessing) {
+            // 录音停止后，等待最终结果
+            delay(500)
+            isProcessing = false
+        }
+        onStateChange(isListening, isPressed || isWaitingForStop, partialResult, showResult, displayedResult)
+    }
+    
+    // 监听其他状态变化  
+    LaunchedEffect(isPressed, isWaitingForStop, partialResult, showResult, displayedResult) {
+        onStateChange(isListening, isPressed || isWaitingForStop, partialResult, showResult, displayedResult)
     }
     
     // 清理资源
@@ -112,6 +132,7 @@ fun VoiceInputFab(
                         Log.d("VoiceInputFab", "按钮被按下，权限状态: $hasPermission")
                         if (hasPermission) {
                             isPressed = true
+                            isProcessing = true // 标记开始处理语音
                             showResult = false // 开始录音时隐藏之前的结果
                             Log.d("VoiceInputFab", "开始录音")
                             voiceService.startListening()
@@ -122,12 +143,22 @@ fun VoiceInputFab(
                             
                             if (released) {
                                 isPressed = false
-                                Log.d("VoiceInputFab", "按钮正常释放，停止录音")
+                                isWaitingForStop = true
+                                Log.d("VoiceInputFab", "按钮正常释放，2秒后停止录音")
+                                // 延迟2秒后停止录音
+                                delay(2000)
                                 voiceService.stopListening()
+                                isWaitingForStop = false
+                                Log.d("VoiceInputFab", "延迟2秒后停止录音完成")
                             } else {
                                 isPressed = false
-                                Log.d("VoiceInputFab", "按钮异常释放或取消，停止录音")
+                                isWaitingForStop = true
+                                Log.d("VoiceInputFab", "按钮异常释放或取消，2秒后停止录音")
+                                // 延迟2秒后停止录音
+                                delay(2000)
                                 voiceService.stopListening()
+                                isWaitingForStop = false
+                                Log.d("VoiceInputFab", "延迟2秒后停止录音完成")
                             }
                         } else {
                             Log.d("VoiceInputFab", "请求录音权限")
@@ -161,9 +192,10 @@ fun VoiceRecognitionOverlay(
     partialResult: String?,
     finalResult: String?,
     showResult: Boolean,
+    isPressed: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    if (isListening || showResult) {
+    if (isListening || showResult || isPressed) {
         Card(
             modifier = modifier
                 .padding(16.dp),
@@ -193,7 +225,13 @@ fun VoiceRecognitionOverlay(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (isListening && partialResult?.isEmpty() != false && !showResult) {
+                if (isPressed && !isListening) {
+                    Text(
+                        text = "正在接收语音输入...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (isListening && partialResult?.isEmpty() != false && !showResult) {
                     Text(
                         text = "正在听取语音...",
                         style = MaterialTheme.typography.bodyMedium,
