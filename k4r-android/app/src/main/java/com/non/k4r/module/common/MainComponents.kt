@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -55,6 +59,9 @@ import com.non.k4r.module.expenditure.model.ExpenditureRecordMainScreenVO
 import com.non.k4r.module.expenditure.vm.MainScreenViewModel
 import com.non.k4r.module.todo.TodoRecordMainScreenVO
 import com.non.k4r.module.todo.component.TodoCard
+import com.non.k4r.module.voice.DashscopeVoiceService
+import com.non.k4r.module.voice.VoiceInputFab
+import com.non.k4r.module.voice.VoiceRecognitionOverlay
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
@@ -67,6 +74,27 @@ fun MainScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val backStackEntry = navController.currentBackStackEntry
+    val context = LocalContext.current
+    
+    // 语音识别服务状态
+    val voiceService = remember { DashscopeVoiceService(context) }
+    val isListening by voiceService.isListening.collectAsState()
+    val partialResult by voiceService.partialResult.collectAsState()
+    val recognitionResult by voiceService.recognitionResult.collectAsState()
+    var showResult by remember { mutableStateOf(false) }
+    var displayedResult by remember { mutableStateOf("") }
+    
+    // 处理识别结果
+    LaunchedEffect(recognitionResult) {
+        recognitionResult?.let { result ->
+            displayedResult = result
+            showResult = true
+            viewModel.processVoiceCommand(result)
+            // 显示结果3秒后自动隐藏
+            kotlinx.coroutines.delay(3000)
+            showResult = false
+        }
+    }
 
     LaunchedEffect(backStackEntry) {
         // 每次进入 MainScreen 时调用 loadData
@@ -116,42 +144,66 @@ fun MainScreen(
 
             }
         ) {
-            Scaffold(
-                topBar = {
-                    Surface(
-                        modifier = Modifier.safeDrawingPadding()
-                    ) {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(Icons.Default.Menu, contentDescription = "打开侧边栏")
+            Box(modifier = modifier.fillMaxSize()) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        Surface(
+                            modifier = Modifier.safeDrawingPadding()
+                        ) {
+                            IconButton(onClick = {
+                                scope.launch { drawerState.open() }
+                            }) {
+                                Icon(Icons.Default.Menu, contentDescription = "打开侧边栏")
+                            }
                         }
-                    }
-                },
-                content = { innerPadding ->
-                    TimelineScreen(
-                        modifier.padding(
-                            top = innerPadding.calculateTopPadding(),
-                            bottom = innerPadding.calculateBottomPadding()
-                        ),
-                        viewModel = viewModel,
-                        records = uiState.records
-                    )
-                },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = { navController.navigate(FeatureCatalogRoute) },
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        content = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "添加记录"
+                    },
+                    content = { innerPadding ->
+                        TimelineScreen(
+                            modifier.padding(
+                                top = innerPadding.calculateTopPadding(),
+                                bottom = innerPadding.calculateBottomPadding()
+                            ),
+                            viewModel = viewModel,
+                            records = uiState.records
+                        )
+                    },
+                    floatingActionButton = {
+                        Column {
+                            VoiceInputFab(
+                                onVoiceResult = { voiceText ->
+                                    displayedResult = voiceText
+                                    showResult = true
+                                    viewModel.processVoiceCommand(voiceText)
+                                },
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            FloatingActionButton(
+                                onClick = { navController.navigate(FeatureCatalogRoute) },
+                                shape = CircleShape,
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                content = {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "添加记录"
+                                    )
+                                }
                             )
                         }
-                    )
-                })
+                    })
+                
+                // 语音识别结果覆盖层
+                VoiceRecognitionOverlay(
+                    isListening = isListening,
+                    partialResult = partialResult,
+                    finalResult = displayedResult,
+                    showResult = showResult,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp) // 避免与TopBar重叠
+                )
+            }
 
         }
     }
@@ -205,6 +257,9 @@ fun TimelineScreen(
                         when (record!!.type) {
                             RecordType.Expenditure -> (record as ExpenditureRecordMainScreenVO).expenditureWithTags!!.expenditureRecord.expenditureDate
                             else -> record.recordTime!!.toLocalDate()
+                        },
+                        onDelete = {
+                            viewModel.deleteRecord(record.id!!)
                         }
                     ) {
                         when (record.type) {

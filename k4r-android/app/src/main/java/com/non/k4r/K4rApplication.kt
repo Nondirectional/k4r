@@ -29,7 +29,7 @@ class K4rApplication : Application() {
         super.onCreate()
         CoroutineScope(Dispatchers.IO).launch {
             // Do some initialization work here
-            var records: List<ExpenditureRecord> = expenditureRecordDao.getAll()
+            val records: List<ExpenditureRecord> = expenditureRecordDao.getAll()
             Log.d("K4rApplication", "onCreate: records-->${records}")
             initExpenditureTags(initiatedFlagHolder, expenditureTagDao)
         }

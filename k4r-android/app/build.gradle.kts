@@ -50,7 +50,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
-
+    implementation(libs.androidx.material3)
     // Dependency injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
@@ -66,6 +66,9 @@ dependencies {
 
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
+    
+    // OkHttp for WebSocket support
+    implementation(libs.okhttp)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

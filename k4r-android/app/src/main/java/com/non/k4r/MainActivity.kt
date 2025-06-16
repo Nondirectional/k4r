@@ -9,6 +9,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import com.non.k4r.module.common.ExpenditureSubmitRoute
 import com.non.k4r.module.common.FeatureCatalogRoute
 import com.non.k4r.module.common.FeatureCatalogScreen
@@ -29,18 +32,30 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             NavHost(navController = navController, startDestination = MainRoute) {
-                composable<MainRoute> { backStackEntry ->
+                composable<MainRoute>(
+                    enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
+                    exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }
+                ) { backStackEntry ->
                     MainScreen(navController = navController)
                 }
-                composable<FeatureCatalogRoute> {
+                composable<FeatureCatalogRoute>(
+                    enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
+                    exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }
+                ) {
                     FeatureCatalogScreen(navController = navController)
                 }
-                composable<ExpenditureSubmitRoute> {
+                composable<ExpenditureSubmitRoute>(
+                    enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
+                    exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }
+                ) {
                     ExpenditureSubmitScreen(onSubmitSuccess = {
                         navController.navigate(MainRoute)
                     })
                 }
-                composable<TodoSubmitRoute> {
+                composable<TodoSubmitRoute>(
+                    enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
+                    exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }
+                ) {
                     TodoSubmitScreen(navController = navController)
                 }
 
