@@ -7,4 +7,5 @@ open class RecordMainScreenVO {
     var id: Long? = null
     var type: RecordType? = null
     var recordTime: LocalDateTime? = null
+    var recomposeFlag: Boolean = false
 }

@@ -37,14 +37,16 @@ class MainScreenViewModel @Inject constructor(
     fun reloadRecords() {
         viewModelScope.launch(Dispatchers.IO) {
             val records: List<Record> = recordDao.pageRecords(20, 0, null)
-            var vos: MutableList<RecordMainScreenVO?> = mutableListOf()
+            var vos: MutableList<RecordMainScreenVO> = mutableListOf()
 
             if (records.isNotEmpty()) {
                 records.forEach { item ->
                     var vo: RecordMainScreenVO? = null
                     when (item.recordType) {
                         RecordType.Expenditure -> {
-                            expenditureRecordDao.getWithTagsByRecordId(item.id)?.let {
+                            var withTagsByRecordId =
+                                expenditureRecordDao.getWithTagsByRecordId(item.id)
+                            withTagsByRecordId?.let {
                                 var voImpl = ExpenditureRecordMainScreenVO()
                                 voImpl.id = item.id
                                 voImpl.type = item.recordType
@@ -52,27 +54,71 @@ class MainScreenViewModel @Inject constructor(
                                 voImpl.expenditureWithTags = it
                                 vo = voImpl
                             }
+
                         }
 
                         RecordType.Todo -> {
-                            var voImpl = TodoRecordMainScreenVO()
-                            voImpl.id = item.id
-                            voImpl.type = item.recordType
-                            voImpl.recordTime = item.recordTime
-                            voImpl.todoRecord = todoRecordDao.getByRecordId(item.id)
-                            vo = voImpl
+                            var todoRecord = todoRecordDao.getByRecordId(item.id)
+                            if (todoRecord != null) {
+                                var voImpl = TodoRecordMainScreenVO()
+                                voImpl.id = item.id
+                                voImpl.type = item.recordType
+                                voImpl.recordTime = item.recordTime
+                                voImpl.todoRecord = todoRecord
+                                vo = voImpl
+                            }
+
                         }
                     }
-                    vos.add(vo)
+                    if (vo != null) {
+                        vos.add(vo!!)
+                    }
                 }
             }
+            var map = vos.map { it.id!! to it }.toMap()
             _uiState.value =
-                _uiState.value.copy(records = vos)
+                _uiState.value.copy(records = vos, map = map)
+
         }
     }
 
+    fun toggleTodoRecord(recordId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            var targetRecord: RecordMainScreenVO? = _uiState.value.map[recordId]
+            if (targetRecord != null) {
+                var vO = targetRecord as TodoRecordMainScreenVO
+                
+                // 创建新的TodoRecord实例以确保状态变化被检测到
+                val updatedTodoRecord = vO.todoRecord!!.copy(
+                    isCompleted = !vO.todoRecord!!.isCompleted
+                )
+                
+                // 更新数据库
+                todoRecordDao.update(updatedTodoRecord)
+                
+                // 在主线程更新UI状态
+                viewModelScope.launch(Dispatchers.Main) {
+                    // 创建新的TodoRecordMainScreenVO实例
+                    val newVO = TodoRecordMainScreenVO().apply {
+                        id = vO.id
+                        type = vO.type
+                        recordTime = vO.recordTime
+                        recomposeFlag = !vO.recomposeFlag
+                        todoRecord = updatedTodoRecord
+                    }
+                    
+                    val updatedRecords = _uiState.value.records.map { record ->
+                        if (record.id == recordId) newVO else record
+                    }
+                    val updatedMap = updatedRecords.associateBy { it.id!! }
+                    _uiState.value = _uiState.value.copy(records = updatedRecords, map = updatedMap)
+                }
+            }
+        }
+    }
 }
 
 data class MainScreenUiState(
-    var records: List<RecordMainScreenVO?> = emptyList(),
+    var records: List<RecordMainScreenVO> = emptyList(),
+    var map: Map<Long, RecordMainScreenVO> = emptyMap()
 )

@@ -134,6 +134,7 @@ fun MainScreen(
                             top = innerPadding.calculateTopPadding(),
                             bottom = innerPadding.calculateBottomPadding()
                         ),
+                        viewModel = viewModel,
                         records = uiState.records
                     )
                 },
@@ -192,6 +193,7 @@ fun DrawerItemButton(
 @Composable
 fun TimelineScreen(
     modifier: Modifier,
+    viewModel: MainScreenViewModel,
     records: List<RecordMainScreenVO?> = emptyList()
 ) {
     Surface(modifier = modifier) {
@@ -225,7 +227,9 @@ fun TimelineScreen(
                                     remark = recordImpl.todoRecord!!.remark,
                                     finished = recordImpl.todoRecord!!.isCompleted,
                                     dueDate = recordImpl.todoRecord!!.dueDate,
-                                    onCheck = {},
+                                    onCheck = {
+                                        viewModel.toggleTodoRecord(recordImpl.todoRecord!!.recordId)
+                                    },
                                 )
                             }
                             else -> throw IllegalArgumentException("Unknown record type")
