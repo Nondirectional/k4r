@@ -31,12 +31,20 @@ class VoiceCommandProcessor {
     // 金额匹配正则
     private val amountPattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*[元块钱]")
     
-    // 时间匹配正则
+    // 时间匹配正则 - 扩展更多时间关键词
     private val timePatterns = mapOf(
         "今天" to 0,
+        "今日" to 0,
         "明天" to 1,
+        "明日" to 1,
         "后天" to 2,
-        "大后天" to 3
+        "後天" to 2,
+        "大后天" to 3,
+        "大後天" to 3,
+        "下周" to 7,
+        "下週" to 7,
+        "下个星期" to 7,
+        "下個星期" to 7
     )
     
     fun processVoiceInput(text: String): VoiceCommand {

@@ -28,7 +28,7 @@ class AddTodoRecordTool @Inject constructor(
 ) : ChatTool {
     
     override val name = "add_todo_record"
-    override val description = "添加待办事项记录。当用户说要添加任务、提醒、待办事项、需要做什么事情等时使用此工具"
+    override val description = "添加待办事项记录。当用户说要添加任务、提醒、待办事项、需要做什么事情等时使用此工具。特别注意正确处理时间信息，将相对时间概念转换为具体日期。"
     override val parameters: JsonElement = buildJsonObject {
         put("type", "object")
         put("properties", buildJsonObject {
@@ -38,7 +38,7 @@ class AddTodoRecordTool @Inject constructor(
             })
             put("dueDate", buildJsonObject {
                 put("type", "string")
-                put("description", "截止日期，格式为YYYY-MM-DD，如果用户没有指定则为空")
+                put("description", "截止日期，格式为YYYY-MM-DD。例如：今天=${java.time.LocalDate.now()}，明天=${java.time.LocalDate.now().plusDays(1)}，后天=${java.time.LocalDate.now().plusDays(2)}。如果用户没有指定则为空。绝对不要使用过去的年份！")
             })
             put("remark", buildJsonObject {
                 put("type", "string")

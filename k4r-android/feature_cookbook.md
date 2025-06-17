@@ -1,4 +1,4 @@
-# feature document for cookbook
+# 
 
 cookbook properties
 - dishes_name

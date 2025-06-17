@@ -15,4 +15,9 @@
 .cxx
 local.properties
 
-*/.idea
+k4r-android/.idea
+k4r-android/.gitignore
+k4r-android/.idea/.gitignore
+k4r-android/.idea/deploymentTargetSelector.xml
+k4r-android/.idea/deviceManager.xml
+k4r-android/.idea/inspectionProfiles/Project_Default.xml

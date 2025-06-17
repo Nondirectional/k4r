@@ -25,13 +25,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -43,6 +47,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -56,12 +61,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -78,7 +87,13 @@ import com.non.k4r.module.voice.VoiceRecognitionOverlay
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.widthIn
 
+import androidx.compose.material3.Button
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun MainScreen(
@@ -98,21 +113,34 @@ fun MainScreen(
     var showResult by remember { mutableStateOf(false) }
     var displayedResult by remember { mutableStateOf("") }
     
-    // 处理语音处理结果提醒
+    // AI响应悬浮窗状态
+    var showAiResponseOverlay by remember { mutableStateOf(false) }
+    var aiResponseContent by remember { mutableStateOf("") }
+    var aiResponseType by remember { mutableStateOf<com.non.k4r.module.expenditure.vm.VoiceProcessResult?>(null) }
+    
+    // 处理语音处理结果提醒 - 改为显示悬浮窗
     LaunchedEffect(voiceProcessResult) {
         voiceProcessResult?.let { result ->
-            when (result) {
+            aiResponseType = result
+            aiResponseContent = when (result) {
                 is com.non.k4r.module.expenditure.vm.VoiceProcessResult.Success -> {
-                    // 显示成功提醒
-                    android.widget.Toast.makeText(context, "✅ ${result.message}", android.widget.Toast.LENGTH_LONG).show()
+                    "✅ ${result.message}"
                 }
                 is com.non.k4r.module.expenditure.vm.VoiceProcessResult.Error -> {
-                    // 显示错误提醒
-                    android.widget.Toast.makeText(context, "❌ ${result.message}", android.widget.Toast.LENGTH_LONG).show()
+                    "❌ ${result.message}"
                 }
             }
+            showAiResponseOverlay = true
             // 清除结果状态
             viewModel.clearVoiceProcessResult()
+        }
+    }
+    
+    // 自动关闭AI响应悬浮窗
+    LaunchedEffect(showAiResponseOverlay) {
+        if (showAiResponseOverlay) {
+            kotlinx.coroutines.delay(5000) // 5秒后自动关闭
+            showAiResponseOverlay = false
         }
     }
 
@@ -186,10 +214,7 @@ fun MainScreen(
                     },
                     content = { innerPadding ->
                         TimelineScreen(
-                            modifier.padding(
-                                top = innerPadding.calculateTopPadding(),
-                                bottom = innerPadding.calculateBottomPadding()
-                            ),
+                            modifier.padding(innerPadding),
                             viewModel = viewModel,
                             records = uiState.records
                         )
@@ -222,6 +247,18 @@ fun MainScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 80.dp) // 避免与TopBar重叠
                 )
+                
+                // AI响应悬浮窗
+                if (showAiResponseOverlay) {
+                    AiResponseOverlay(
+                        content = aiResponseContent,
+                        isSuccess = aiResponseType is com.non.k4r.module.expenditure.vm.VoiceProcessResult.Success,
+                        onDismiss = { showAiResponseOverlay = false },
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 32.dp)
+                    )
+                }
             }
 
         }
@@ -446,7 +483,7 @@ fun MultiFunctionFab(
     
     Card(
         modifier = modifier
-            .size(56.dp)
+            .size(72.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
@@ -466,13 +503,13 @@ fun MultiFunctionFab(
                     },
                     onPress = {
                         Log.d("MultiFunctionFab", "按钮被按下")
-                        val pressStartTime = System.currentTimeMillis()
-                        
-                        // 等待500ms判断是否为长按
+                        voiceService.startListening()
+                        // 等待200ms判断是否为长按
                         val isLongPress = try {
-                            delay(500) // 长按阈值
+                            delay(200) // 长按阈值
                             true
                         } catch (e: Exception) {
+                            voiceService.stopListening()
                             false
                         }
                         
@@ -486,7 +523,7 @@ fun MultiFunctionFab(
                                 isProcessing = true
                                 showResult = false
                                 Log.d("MultiFunctionFab", "开始录音")
-                                voiceService.startListening()
+
                                 
                                 val released = tryAwaitRelease()
                                 Log.d("MultiFunctionFab", "按钮释放状态: $released")
@@ -494,19 +531,19 @@ fun MultiFunctionFab(
                                 if (released) {
                                     isPressed = false
                                     isWaitingForStop = true
-                                    Log.d("MultiFunctionFab", "按钮正常释放，1秒后停止录音")
-                                    delay(1000)
+                                    Log.d("MultiFunctionFab", "按钮正常释放，200毫秒后停止录音")
+                                    delay(200)
                                     voiceService.stopListening()
                                     isWaitingForStop = false
-                                    Log.d("MultiFunctionFab", "延迟1秒后停止录音完成")
+                                    Log.d("MultiFunctionFab", "延迟200毫秒后停止录音完成")
                                 } else {
                                     isPressed = false
                                     isWaitingForStop = true
-                                    Log.d("MultiFunctionFab", "按钮异常释放或取消，1秒后停止录音")
-                                    delay(1000)
+                                    Log.d("MultiFunctionFab", "按钮异常释放或取消，200毫秒后停止录音")
+                                    delay(200)
                                     voiceService.stopListening()
                                     isWaitingForStop = false
-                                    Log.d("MultiFunctionFab", "延迟1秒后停止录音完成")
+                                    Log.d("MultiFunctionFab", "延迟200毫秒后停止录音完成")
                                 }
                             } else {
                                 Log.d("MultiFunctionFab", "请求录音权限")
@@ -542,6 +579,179 @@ fun MultiFunctionFab(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             Log.e("MultiFunctionFab", "语音识别错误: $errorMessage")
+        }
+    }
+}
+
+/**
+ * AI响应悬浮窗组件 - 美化版本
+ * 可点击其他区域关闭，包含进入退出动画
+ */
+@Composable
+fun AiResponseOverlay(
+    content: String,
+    isSuccess: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 渐变背景遮罩
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.4f),
+                        Color.Black.copy(alpha = 0.2f)
+                    ),
+                    radius = 800f
+                )
+            )
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        // 悬浮窗主体卡片
+        Card(
+            modifier = modifier
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { }, // 阻止点击事件向上传播
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 24.dp)
+        ) {
+            // 内容区域
+            Box {
+                // 背景装饰
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = if (isSuccess) {
+                                    listOf(
+                                        Color(0xFF4CAF50).copy(alpha = 0.1f),
+                                        Color(0xFF81C784).copy(alpha = 0.05f),
+                                        Color.Transparent
+                                    )
+                                } else {
+                                    listOf(
+                                        Color(0xFFFF5722).copy(alpha = 0.1f),
+                                        Color(0xFFFFAB91).copy(alpha = 0.05f),
+                                        Color.Transparent
+                                    )
+                                }
+                            )
+                        )
+                )
+                
+                Column(
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .widthIn(min = 280.dp, max = 360.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // 顶部装饰线
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                color = if (isSuccess) Color(0xFF4CAF50) else Color(0xFFFF5722),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // 图标容器
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = if (isSuccess) {
+                                        listOf(
+                                            Color(0xFF4CAF50).copy(alpha = 0.2f),
+                                            Color(0xFF4CAF50).copy(alpha = 0.1f)
+                                        )
+                                    } else {
+                                        listOf(
+                                            Color(0xFFFF5722).copy(alpha = 0.2f),
+                                            Color(0xFFFF5722).copy(alpha = 0.1f)
+                                        )
+                                    }
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Warning,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = if (isSuccess) Color(0xFF4CAF50) else Color(0xFFFF5722)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // 标题
+                    Text(
+                        text = if (isSuccess) "操作成功" else "操作失败",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color(0xFF2E2E2E),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // 响应内容
+                    Text(
+                        text = content.removePrefix("✅ ").removePrefix("❌ "),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            lineHeight = 22.sp
+                        ),
+                        color = Color(0xFF666666),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    // 关闭按钮
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSuccess) Color(0xFF4CAF50) else Color(0xFFFF5722),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 8.dp
+                        )
+                    ) {
+                        Text(
+                            text = "确定",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
+            }
         }
     }
 }
