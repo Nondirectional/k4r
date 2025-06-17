@@ -13,6 +13,7 @@ interface RecordDao : BaseDao<Record> {
       SELECT * 
       FROM k4r_records 
       WHERE CASE WHEN :id IS NULL THEN 1 ELSE id = :id END
+      ORDER BY id DESC
       LIMIT :pageSize OFFSET :offset
     """
     )

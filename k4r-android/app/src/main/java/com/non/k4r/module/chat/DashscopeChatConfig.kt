@@ -1,45 +1,46 @@
-package com.non.k4r.module.voice
+package com.non.k4r.module.chat
 
 import android.content.Context
 import com.non.k4r.module.settings.SettingsRepository
 import kotlinx.coroutines.runBlocking
 
 /**
- * 阿里云Dashscope语音识别服务配置
+ * 阿里云百炼大模型对话服务配置
  * 
- * 使用说明：
- * 1. 请在阿里云控制台获取您的API Key
- * 2. 在应用设置页面配置API Key和模型ID
- * 3. 或者通过环境变量、配置文件等方式动态配置
+ * 参考文档：https://help.aliyun.com/zh/model-studio/getting-started/first-api-call-to-qwen
+ * OpenAI兼容接口：https://help.aliyun.com/zh/model-studio/developer-reference/compatibility-of-openai-with-dashscope
  */
-object DashscopeConfig {
+object DashscopeChatConfig {
     
     /**
-     * 默认阿里云Dashscope API Key（后备配置）
+     * 默认阿里云百炼API Key（后备配置）
      */
     private const val DEFAULT_API_KEY = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     
     /**
-     * 默认语音识别模型（后备配置）
+     * 默认模型（后备配置）
      */
-    private const val DEFAULT_MODEL = "paraformer-realtime-v2"
+    const val DEFAULT_MODEL = "qwen-plus"
     
     /**
-     * WebSocket连接URL
+     * OpenAI兼容接口基础URL
      */
-    const val WEBSOCKET_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
+    const val BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/"
     
     /**
-     * 语音识别模型
+     * 聊天完成接口URL
      */
-    const val MODEL = "paraformer-realtime-v2"
+    const val CHAT_COMPLETIONS_URL = "${BASE_URL}chat/completions"
     
     /**
-     * 音频格式配置
+     * 请求超时时间（秒）
      */
-    const val AUDIO_FORMAT = "pcm"
-    const val SAMPLE_RATE = 16000
-    const val AUDIO_ENCODE = "LINEAR16"
+    const val TIMEOUT_SECONDS = 30L
+    
+    /**
+     * 最大重试次数
+     */
+    const val MAX_RETRY_COUNT = 3
     
     /**
      * 从设置获取API Key，如果未配置则使用默认值
@@ -48,7 +49,7 @@ object DashscopeConfig {
         return runBlocking {
             try {
                 val settingsRepository = SettingsRepository(context)
-                val apiKey = settingsRepository.getVoiceApiKey()
+                val apiKey = settingsRepository.getChatApiKey()
                 if (apiKey.isNotBlank()) apiKey else DEFAULT_API_KEY
             } catch (e: Exception) {
                 DEFAULT_API_KEY
@@ -63,7 +64,7 @@ object DashscopeConfig {
         return runBlocking {
             try {
                 val settingsRepository = SettingsRepository(context)
-                val model = settingsRepository.getVoiceModel()
+                val model = settingsRepository.getChatModel()
                 if (model.isNotBlank()) model else DEFAULT_MODEL
             } catch (e: Exception) {
                 DEFAULT_MODEL
@@ -79,10 +80,20 @@ object DashscopeConfig {
         return apiKey != "YOUR_DASHSCOPE_API_KEY" && apiKey.isNotBlank()
     }
     
+    /**
+     * 获取Authorization头
+     */
+    fun getAuthorizationHeader(context: Context): String {
+        return "Bearer ${getApiKey(context)}"
+    }
+    
     // 保留原有方法以兼容现有代码
     @Deprecated("请使用 getApiKey(context: Context) 方法")
     fun getApiKey(): String = DEFAULT_API_KEY
     
-    @Deprecated("请使用 isApiKeyConfigured(context: Context) 方法")
+    @Deprecated("请使用 isApiKeyConfigured(context: Context) 方法") 
     fun isApiKeyConfigured(): Boolean = DEFAULT_API_KEY.isNotBlank()
+    
+    @Deprecated("请使用 getAuthorizationHeader(context: Context) 方法")
+    fun getAuthorizationHeader(): String = "Bearer $DEFAULT_API_KEY"
 }

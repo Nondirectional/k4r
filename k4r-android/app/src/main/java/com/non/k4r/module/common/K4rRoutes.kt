@@ -13,3 +13,9 @@ object ExpenditureSubmitRoute
 
 @Serializable
 object TodoSubmitRoute
+
+@Serializable
+object ChatRoute
+
+@Serializable
+object SettingsRoute

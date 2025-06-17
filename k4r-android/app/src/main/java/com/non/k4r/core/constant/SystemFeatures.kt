@@ -10,6 +10,10 @@ enum class SystemFeatures() {
     Todo {
         override fun featureName(): String = "待办"
         override fun iconResId(): Int = R.drawable.baseline_done_24
+    },
+    Chat {
+        override fun featureName(): String = "智能对话"
+        override fun iconResId(): Int = R.drawable.baseline_chat_24
     };
 
     abstract fun featureName(): String

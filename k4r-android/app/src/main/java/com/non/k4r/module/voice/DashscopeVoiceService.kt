@@ -77,12 +77,12 @@ class DashscopeVoiceService(private val context: Context) {
     }
 
     fun startListening() {
-        if (!DashscopeConfig.isApiKeyConfigured()) {
-            _error.value = "请先在DashscopeConfig中配置阿里云Dashscope API Key"
+        if (!DashscopeConfig.isApiKeyConfigured(context)) {
+            _error.value = "请先在设置中配置阿里云Dashscope API Key"
             return
         }
 
-        val apiKey = DashscopeConfig.getApiKey()
+        val apiKey = DashscopeConfig.getApiKey(context)
         val request = Request.Builder()
             .url(DashscopeConfig.WEBSOCKET_URL)
             .addHeader("Authorization", "bearer $apiKey")

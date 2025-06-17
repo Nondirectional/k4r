@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DisplayMode
@@ -38,17 +42,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordCard(
     modifier: Modifier = Modifier,
-    date: LocalDate,
+    dateTime: LocalDateTime,
     onDelete: (() -> Unit)? = null,
     cardImpl: @Composable () -> Unit,
 ) {
@@ -68,21 +75,24 @@ fun RecordCard(
 
         SwipeToDismissBox(
             state = dismissState,
-            modifier = modifier,
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             backgroundContent = {
                 val color = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> Color.Red
+                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFFF5252)
                     else -> Color.Transparent
                 }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(color),
+                        .background(
+                            color = color,
+                            shape = RoundedCornerShape(16.dp)
+                        ),
                     contentAlignment = Alignment.CenterEnd
                 ) {
                     if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                            modifier = Modifier.padding(horizontal = 24.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -95,22 +105,51 @@ fun RecordCard(
                             Text(
                                 text = "删除",
                                 color = Color.White,
-                                fontSize = 14.sp
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
             },
             content = {
-                OutlinedCard {
-                    Column(Modifier.padding(horizontal = 8.dp)) {
-                        Text(
-                            modifier = Modifier.padding(start = 16.dp, bottom = 0.dp),
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.618f),
-                            text = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                        )
-                        cardImpl()
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 8.dp
+                    )
+                ) {
+                    Column {
+                        // 日期时间标签
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                                        )
+                                    )
+                                )
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
+                        // 卡片内容
+                        Box(modifier = Modifier.padding(4.dp)) {
+                            cardImpl()
+                        }
                     }
                 }
             }
@@ -120,8 +159,18 @@ fun RecordCard(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("确认删除") },
-                text = { Text("确定要删除这条记录吗？此操作无法撤销。") },
+                title = { 
+                    Text(
+                        "确认删除",
+                        style = MaterialTheme.typography.titleLarge
+                    ) 
+                },
+                text = { 
+                    Text(
+                        "确定要删除这条记录吗？此操作无法撤销。",
+                        style = MaterialTheme.typography.bodyMedium
+                    ) 
+                },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -129,7 +178,11 @@ fun RecordCard(
                             onDelete()
                         }
                     ) {
-                        Text("删除")
+                        Text(
+                            "删除",
+                            color = Color(0xFFD32F2F),
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 },
                 dismissButton = {
@@ -142,15 +195,44 @@ fun RecordCard(
             )
         }
     } else {
-        OutlinedCard(modifier = modifier) {
-            Column(Modifier.padding(horizontal = 8.dp)) {
-                Text(
-                    modifier = Modifier.padding(start = 16.dp, bottom = 0.dp),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.618f),
-                    text = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                )
-                cardImpl()
+        Card(
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 8.dp
+            )
+        ) {
+            Column {
+                // 日期时间标签
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                                )
+                            )
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                
+                // 卡片内容
+                Box(modifier = Modifier.padding(4.dp)) {
+                    cardImpl()
+                }
             }
         }
     }
