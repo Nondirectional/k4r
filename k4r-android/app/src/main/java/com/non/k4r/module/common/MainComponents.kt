@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.compose.runtime.derivedStateOf
 import com.non.k4r.R
 import com.non.k4r.core.data.database.constant.RecordType
 import com.non.k4r.module.common.model.RecordMainScreenVO
@@ -87,6 +88,8 @@ import com.non.k4r.module.voice.VoiceRecognitionOverlay
 import com.non.k4r.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.widthIn
@@ -232,7 +235,8 @@ fun MainScreen(
                                 partialResult = partial
                                 showResult = showRes
                                 displayedResult = displayed
-                            }
+                            },
+                            navController = navController
                         )
                     })
                 
@@ -404,6 +408,7 @@ fun MultiFunctionFab(
     onDoubleClick: () -> Unit,
     onVoiceResult: (String) -> Unit,
     onStateChange: (isListening: Boolean, isPressed: Boolean, partialResult: String?, showResult: Boolean, displayedResult: String) -> Unit = { _, _, _, _, _ -> },
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -421,20 +426,40 @@ fun MultiFunctionFab(
     var isProcessing by remember { mutableStateOf(false) }
     var isWaitingForStop by remember { mutableStateOf(false) }
     var isLongPressing by remember { mutableStateOf(false) }
+    var isComponentActive by remember { mutableStateOf(true) }
+    
+    // 检查是否还在MainScreen
+    val currentRoute by remember {
+        derivedStateOf {
+            navController.currentBackStackEntry?.destination?.route
+        }
+    }
+    val isInMainScreen by remember {
+        derivedStateOf {
+            currentRoute?.contains("MainRoute") == true
+        }
+    }
     
     val voiceService = remember { DashscopeVoiceService(context) }
+    val isConnected by voiceService.isConnected.collectAsState()
     val isListening by voiceService.isListening.collectAsState()
     val recognitionResult by voiceService.recognitionResult.collectAsState()
     val partialResult by voiceService.partialResult.collectAsState()
     val error by voiceService.error.collectAsState()
+    
+    // 组件初始化时建立WebSocket连接
+    LaunchedEffect(Unit) {
+        Log.d("MultiFunctionFab", "初始化WebSocket连接")
+        voiceService.initializeConnection()
+    }
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasPermission = isGranted
-        if (isGranted) {
-            voiceService.startListening()
+        if (!isGranted) {
+            Log.d("MultiFunctionFab", "权限被拒绝")
         }
     }
     
@@ -474,9 +499,10 @@ fun MultiFunctionFab(
         }
     }
     
-    // 清理资源
+    // 清理资源并标记组件为不活跃
     DisposableEffect(Unit) {
         onDispose {
+            isComponentActive = false
             voiceService.destroy()
         }
     }
@@ -503,26 +529,48 @@ fun MultiFunctionFab(
                     },
                     onPress = {
                         Log.d("MultiFunctionFab", "按钮被按下")
-                        voiceService.startListening()
-                        // 等待200ms判断是否为长按
+                        // 等待500ms判断是否为长按
                         val isLongPress = try {
-                            delay(200) // 长按阈值
-                            true
+                            delay(500) // 长按阈值
+                            // 检查组件是否还在活跃状态且还在MainScreen
+                            if (isComponentActive && currentCoroutineContext().isActive && isInMainScreen) {
+                                true
+                            } else {
+                                Log.d("MultiFunctionFab", "组件已不在活跃状态或已离开MainScreen，取消长按操作")
+                                false
+                            }
                         } catch (e: Exception) {
-                            voiceService.stopListening()
+                            Log.d("MultiFunctionFab", "长按检测被中断: ${e.message}")
                             false
                         }
                         
-                        if (isLongPress) {
+                        if (isLongPress && isComponentActive && isInMainScreen) {
                             // 长按：语音录入
                             isLongPressing = true
-                            Log.d("MultiFunctionFab", "检测到长按，开始语音录入，权限状态: $hasPermission")
+                            Log.d("MultiFunctionFab", "检测到长按，开始语音录入，权限状态: $hasPermission，连接状态: $isConnected")
                             
                             if (hasPermission) {
+                                if (!isConnected) {
+                                    Log.d("MultiFunctionFab", "WebSocket未连接，尝试重新连接")
+                                    voiceService.initializeConnection()
+                                    // 等待连接建立
+                                    delay(1000)
+                                    // 检查组件是否还在活跃状态且还在MainScreen
+                                    if (!isComponentActive || !currentCoroutineContext().isActive || !isInMainScreen) {
+                                        Log.d("MultiFunctionFab", "组件已不在活跃状态或已离开MainScreen，取消操作")
+                                        return@detectTapGestures
+                                    }
+                                    if (!isConnected) {
+                                        Log.e("MultiFunctionFab", "WebSocket连接失败")
+                                        return@detectTapGestures
+                                    }
+                                }
+                                
                                 isPressed = true
                                 isProcessing = true
                                 showResult = false
-                                Log.d("MultiFunctionFab", "开始录音")
+                                Log.d("MultiFunctionFab", "开始语音识别任务")
+                                voiceService.startListening()
 
                                 
                                 val released = tryAwaitRelease()
@@ -531,19 +579,29 @@ fun MultiFunctionFab(
                                 if (released) {
                                     isPressed = false
                                     isWaitingForStop = true
-                                    Log.d("MultiFunctionFab", "按钮正常释放，200毫秒后停止录音")
+                                    Log.d("MultiFunctionFab", "按钮正常释放，200毫秒后停止语音识别任务")
                                     delay(200)
-                                    voiceService.stopListening()
-                                    isWaitingForStop = false
-                                    Log.d("MultiFunctionFab", "延迟200毫秒后停止录音完成")
+                                    // 检查组件是否还在活跃状态且还在MainScreen
+                                    if (isComponentActive && currentCoroutineContext().isActive && isInMainScreen) {
+                                        voiceService.stopListening()
+                                        isWaitingForStop = false
+                                        Log.d("MultiFunctionFab", "延迟200毫秒后停止语音识别任务完成")
+                                    } else {
+                                        Log.d("MultiFunctionFab", "组件已不在活跃状态或已离开MainScreen，跳过停止操作")
+                                    }
                                 } else {
                                     isPressed = false
                                     isWaitingForStop = true
-                                    Log.d("MultiFunctionFab", "按钮异常释放或取消，200毫秒后停止录音")
+                                    Log.d("MultiFunctionFab", "按钮异常释放或取消，200毫秒后停止语音识别任务")
                                     delay(200)
-                                    voiceService.stopListening()
-                                    isWaitingForStop = false
-                                    Log.d("MultiFunctionFab", "延迟200毫秒后停止录音完成")
+                                    // 检查组件是否还在活跃状态且还在MainScreen
+                                    if (isComponentActive && currentCoroutineContext().isActive && isInMainScreen) {
+                                        voiceService.stopListening()
+                                        isWaitingForStop = false
+                                        Log.d("MultiFunctionFab", "延迟200毫秒后停止语音识别任务完成")
+                                    } else {
+                                        Log.d("MultiFunctionFab", "组件已不在活跃状态或已离开MainScreen，跳过停止操作")
+                                    }
                                 }
                             } else {
                                 Log.d("MultiFunctionFab", "请求录音权限")

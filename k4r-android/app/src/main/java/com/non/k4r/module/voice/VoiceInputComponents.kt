@@ -31,6 +31,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -62,10 +64,17 @@ fun VoiceInputFab(
     Log.d("VoiceInputFab", "初始权限状态: $hasPermission")
     
     val voiceService = remember { DashscopeVoiceService(context) }
+    val isConnected by voiceService.isConnected.collectAsState()
     val isListening by voiceService.isListening.collectAsState()
     val recognitionResult by voiceService.recognitionResult.collectAsState()
     val partialResult by voiceService.partialResult.collectAsState()
     val error by voiceService.error.collectAsState()
+    
+    // 组件初始化时建立WebSocket连接
+    LaunchedEffect(Unit) {
+        Log.d("VoiceInputFab", "初始化WebSocket连接")
+        voiceService.initializeConnection()
+    }
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -73,11 +82,7 @@ fun VoiceInputFab(
     ) { isGranted ->
         Log.d("VoiceInputFab", "权限请求结果: $isGranted")
         hasPermission = isGranted
-        if (isGranted) {
-            Log.d("VoiceInputFab", "权限授予，开始录音")
-            // 权限授予后自动开始录音
-            voiceService.startListening()
-        } else {
+        if (!isGranted) {
             Log.d("VoiceInputFab", "权限被拒绝")
         }
     }
@@ -121,7 +126,7 @@ fun VoiceInputFab(
     // 按住说话的按钮
     Box(
         modifier = modifier
-            .size(56.dp)
+            .size(64.dp)
             .background(
                 color = if (isListening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                 shape = CircleShape
@@ -129,36 +134,60 @@ fun VoiceInputFab(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
-                        Log.d("VoiceInputFab", "按钮被按下，权限状态: $hasPermission")
+                        Log.d("VoiceInputFab", "按钮被按下，权限状态: $hasPermission，连接状态: $isConnected")
+                        
                         if (hasPermission) {
+                            if (!isConnected) {
+                                Log.d("VoiceInputFab", "WebSocket未连接，尝试重新连接")
+                                voiceService.initializeConnection()
+
+                                // 检查组件是否还在活跃状态
+                                if (!currentCoroutineContext().isActive) {
+                                    Log.d("VoiceInputFab", "组件已不在活跃状态，取消操作")
+                                    return@detectTapGestures
+                                }
+                                if (!isConnected) {
+                                    Log.e("VoiceInputFab", "WebSocket连接失败")
+                                    return@detectTapGestures
+                                }
+                            }
+                            
                             isPressed = true
-                            isProcessing = true // 标记开始处理语音
-                            showResult = false // 开始录音时隐藏之前的结果
-                            Log.d("VoiceInputFab", "开始录音")
+                            isProcessing = true
+                            showResult = false
+                            Log.d("VoiceInputFab", "开始语音识别任务")
                             voiceService.startListening()
                             
-                            // 等待释放，使用awaitRelease()确保只有在真正释放时才执行
                             val released = tryAwaitRelease()
                             Log.d("VoiceInputFab", "按钮释放状态: $released")
                             
                             if (released) {
                                 isPressed = false
                                 isWaitingForStop = true
-                                Log.d("VoiceInputFab", "按钮正常释放，2秒后停止录音")
-                                // 延迟2秒后停止录音
-                                delay(2000)
-                                voiceService.stopListening()
-                                isWaitingForStop = false
-                                Log.d("VoiceInputFab", "延迟2秒后停止录音完成")
+                                Log.d("VoiceInputFab", "按钮正常释放，200毫秒后停止语音识别任务")
+                                delay(200)
+                                // 检查组件是否还在活跃状态
+                                if (currentCoroutineContext().isActive) {
+                                    voiceService.stopListening()
+                                    isWaitingForStop = false
+                                    Log.d("VoiceInputFab", "延迟200毫秒后停止语音识别任务完成")
+                                } else {
+                                    Log.d("VoiceInputFab", "组件已不在活跃状态，跳过停止操作")
+                                }
                             } else {
                                 isPressed = false
                                 isWaitingForStop = true
-                                Log.d("VoiceInputFab", "按钮异常释放或取消，2秒后停止录音")
+                                Log.d("VoiceInputFab", "按钮异常释放或取消，2秒后停止语音识别任务")
                                 // 延迟2秒后停止录音
                                 delay(2000)
-                                voiceService.stopListening()
-                                isWaitingForStop = false
-                                Log.d("VoiceInputFab", "延迟2秒后停止录音完成")
+                                // 检查组件是否还在活跃状态
+                                if (currentCoroutineContext().isActive) {
+                                    voiceService.stopListening()
+                                    isWaitingForStop = false
+                                    Log.d("VoiceInputFab", "延迟2秒后停止语音识别任务完成")
+                                } else {
+                                    Log.d("VoiceInputFab", "组件已不在活跃状态，跳过停止操作")
+                                }
                             }
                         } else {
                             Log.d("VoiceInputFab", "请求录音权限")

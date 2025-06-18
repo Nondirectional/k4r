@@ -186,27 +186,12 @@ class MainScreenViewModel @Inject constructor(
                 请根据用户的输入，调用合适的工具来完成操作。
                 
                 **当前日期信息：**
-                今天是：${java.time.LocalDate.now()}
-                
-                **时间处理规则：**
-                - 当用户说"今天"时，使用当前日期：${java.time.LocalDate.now()}
-                - 当用户说"明天"时，使用：${java.time.LocalDate.now().plusDays(1)}
-                - 当用户说"后天"时，使用：${java.time.LocalDate.now().plusDays(2)}
-                - 当用户说"大后天"时，使用：${java.time.LocalDate.now().plusDays(3)}
-                - 当用户说"下周"时，使用：${java.time.LocalDate.now().plusWeeks(1)}
-                - 当用户说具体日期时，尽量理解并转换为正确的日期格式
-                - 日期格式必须是：YYYY-MM-DD（例如：2025-06-18）
+                今天是：${LocalDate.now()}
                 
                 **可用工具说明：**
                 1. add_expenditure_record：添加支出或收入记录
                 2. add_todo_record：添加待办事项记录
                 
-                **重要提醒：**
-                - 对于待办事项，如果用户提到时间相关词汇（明天、后天、下周等），必须将其转换为具体的日期
-                - 绝对不要使用2023年或其他过去的年份
-                - 如果无法确定日期，可以不设置截止日期，但不要设置错误的日期
-                
-                请分析用户的语音输入内容，正确处理时间信息，然后调用相应的工具。
                 工具执行成功后，请用简洁的中文总结操作结果。
                 """.trimIndent()
                 

@@ -28,6 +28,9 @@ class DashscopeVoiceService(private val context: Context) {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected: StateFlow<Boolean> = _isConnected
+
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening
 
@@ -47,7 +50,8 @@ class DashscopeVoiceService(private val context: Context) {
     private val webSocketListener = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d(TAG, "WebSocket连接已建立")
-            startTask()
+            _isConnected.value = true
+            _error.value = null
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
@@ -61,22 +65,33 @@ class DashscopeVoiceService(private val context: Context) {
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             Log.d(TAG, "WebSocket正在关闭: $code $reason")
+            _isConnected.value = false
             _isListening.value = false
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             Log.d(TAG, "WebSocket已关闭: $code $reason")
+            _isConnected.value = false
             _isListening.value = false
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             Log.e(TAG, "WebSocket连接失败", t)
             _error.value = "连接失败: ${t.message}"
+            _isConnected.value = false
             _isListening.value = false
         }
     }
 
-    fun startListening() {
+    /**
+     * 初始化WebSocket连接，不开始语音任务
+     */
+    fun initializeConnection() {
+        if (_isConnected.value) {
+            Log.d(TAG, "WebSocket已连接，无需重复初始化")
+            return
+        }
+
         if (!DashscopeConfig.isApiKeyConfigured(context)) {
             _error.value = "请先在设置中配置阿里云Dashscope API Key"
             return
@@ -91,6 +106,23 @@ class DashscopeVoiceService(private val context: Context) {
 
         webSocket = client.newWebSocket(request, webSocketListener)
         _error.value = null
+    }
+
+    /**
+     * 开始语音识别任务（发送run-task指令）
+     */
+    fun startListening() {
+        if (!_isConnected.value) {
+            _error.value = "WebSocket未连接，请先初始化连接"
+            return
+        }
+
+        if (isTaskStarted) {
+            Log.d(TAG, "语音识别任务已在进行中")
+            return
+        }
+
+        startTask()
         _recognitionResult.value = null
         _partialResult.value = null
     }
@@ -117,6 +149,8 @@ class DashscopeVoiceService(private val context: Context) {
                     put("incremental_output", true)
                     put("enable_punctuation_prediction", true)
                     put("enable_inverse_text_normalization", true)
+                    put("language_hints","zh")
+                    put("disfluency_removal_enabled",true)
                 })
             })
         }
@@ -163,6 +197,11 @@ class DashscopeVoiceService(private val context: Context) {
                     Log.d(TAG, "任务已完成")
                     _isListening.value = false
                     isTaskStarted = false
+                    // 停止音频录制
+                    audioRecordingJob?.cancel()
+                    audioRecordingJob = null
+                    // 清除部分识别结果
+                    _partialResult.value = null
                 }
 
                 "task-failed" -> {
@@ -171,6 +210,10 @@ class DashscopeVoiceService(private val context: Context) {
                     Log.e(TAG, "任务失败: $errorMessage")
                     _error.value = "识别失败: $errorMessage"
                     _isListening.value = false
+                    isTaskStarted = false
+                    // 停止音频录制
+                    audioRecordingJob?.cancel()
+                    audioRecordingJob = null
                 }
             }
         } catch (e: Exception) {
@@ -185,6 +228,9 @@ class DashscopeVoiceService(private val context: Context) {
         }
     }
 
+    /**
+     * 停止语音识别任务（发送finish-task指令），但保持WebSocket连接
+     */
     fun stopListening() {
         if (isTaskStarted && currentTaskId != null) {
             val finishTaskMessage = JSONObject().apply {
@@ -207,6 +253,9 @@ class DashscopeVoiceService(private val context: Context) {
         _partialResult.value = null
     }
 
+    /**
+     * 关闭WebSocket连接并清理所有资源
+     */
     fun destroy() {
         stopListening()
         webSocket?.close(1000, "正常关闭")
@@ -216,6 +265,7 @@ class DashscopeVoiceService(private val context: Context) {
         audioRecordingJob?.cancel()
         audioRecordingJob = null
         // 清除所有状态
+        _isConnected.value = false
         _recognitionResult.value = null
         _partialResult.value = null
         _error.value = null
