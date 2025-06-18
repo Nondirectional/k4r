@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # FastAPI 应用
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/k4r_db
+      - DATABASE_URL_SYNC=postgresql://postgres:password@db:5432/k4r_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+    command: python run.py
+
+  # PostgreSQL 数据库
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: k4r_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Redis 缓存
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data: 
