@@ -12,10 +12,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import com.non.k4r.module.auth.LoginScreen
 import com.non.k4r.module.common.ChatRoute
 import com.non.k4r.module.common.ExpenditureSubmitRoute
 import com.non.k4r.module.common.FeatureCatalogRoute
 import com.non.k4r.module.common.FeatureCatalogScreen
+import com.non.k4r.module.common.LoginRoute
 import com.non.k4r.module.common.MainRoute
 import com.non.k4r.module.common.MainScreen
 import com.non.k4r.module.common.SettingsRoute
@@ -38,6 +40,18 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = MainRoute) {
+                    composable<LoginRoute>(
+                        enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
+                        exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }
+                    ) {
+                        LoginScreen(
+                            onLoginSuccess = {
+                                navController.navigate(MainRoute) {
+                                    popUpTo<LoginRoute> { inclusive = true }
+                                }
+                            }
+                        )
+                    }
                     composable<MainRoute>(
                         enterTransition = { slideInHorizontally(animationSpec = tween(400)) { it } },
                         exitTransition = { slideOutHorizontally(animationSpec = tween(400)) { -it } }

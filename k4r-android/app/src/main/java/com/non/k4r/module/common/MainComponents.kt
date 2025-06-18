@@ -168,14 +168,25 @@ fun MainScreen(
                     ) {
                         Image(
                             painter = painterResource(R.mipmap.default_avatar),
-                            contentDescription = null,
+                            contentDescription = "点击登录",
                             contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .size(100.dp)
                                 .clip(CircleShape)
+                                .clickable {
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
+                                    navController.navigate(LoginRoute)
+                                }
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text(color = MaterialTheme.colorScheme.onSurface, text = "未登录")
+                        Text(
+                            color = MaterialTheme.colorScheme.onSurface, 
+                            text = "点击头像登录",
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp
+                        )
                         Spacer(Modifier.height(16.dp))
                         DrawerItemButton(
                             isSelected = true,

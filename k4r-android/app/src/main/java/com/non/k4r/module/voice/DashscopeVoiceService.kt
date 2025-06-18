@@ -1,10 +1,13 @@
 package com.non.k4r.module.voice
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CoroutineScope
@@ -272,6 +275,13 @@ class DashscopeVoiceService(private val context: Context) {
     }
 
     private fun startAudioRecording() {
+        // 检查录音权限
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) 
+            != PackageManager.PERMISSION_GRANTED) {
+            _error.value = "录音权限未授予，请在设置中开启录音权限"
+            return
+        }
+        
         audioRecordingJob = CoroutineScope(Dispatchers.IO).launch {
             try {
                 val sampleRate = DashscopeConfig.SAMPLE_RATE

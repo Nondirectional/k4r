@@ -3,6 +3,9 @@ package com.non.k4r.module.common;
 import kotlinx.serialization.Serializable;
 
 @Serializable
+object LoginRoute
+
+@Serializable
 object MainRoute
 
 @Serializable

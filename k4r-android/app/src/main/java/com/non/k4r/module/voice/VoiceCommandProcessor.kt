@@ -70,10 +70,12 @@ class VoiceCommandProcessor {
         
         // 提取金额
         val amountMatcher = amountPattern.matcher(text)
+        var amountMatch: String? = null
         if (amountMatcher.find()) {
             val amountStr = amountMatcher.group(1)
+            amountMatch = amountMatcher.group()
             try {
-                val amount = amountStr.toDouble()
+                val amount = amountStr?.toDouble() ?: 0.0
                 parameters["amount"] = (amount * 100).toInt() // 转换为分
             } catch (e: NumberFormatException) {
                 // 忽略无效金额
@@ -82,8 +84,8 @@ class VoiceCommandProcessor {
         
         // 提取描述（移除金额和关键词后的内容）
         var description = text
-        if (amountMatcher.find()) {
-            description = description.replace(amountMatcher.group(), "")
+        amountMatch?.let { match ->
+            description = description.replace(match, "")
         }
         
         // 移除开支关键词
