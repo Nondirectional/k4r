@@ -8,6 +8,7 @@ from app.core import security
 from app.core.config import settings
 from app.core.database import get_db
 from app.crud import crud_user
+from app.crud.crud_user import get_current_user
 from app.schemas.user import Token
 from app.models.user import User
 
@@ -28,7 +29,7 @@ async def login_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码不正确"
         )
-    elif not user.is_active:
+    elif not crud_user.is_active(user):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="用户账号已被禁用"
@@ -44,6 +45,6 @@ async def login_access_token(
 
 
 @router.post("/test-token", response_model=Token)
-async def test_token(current_user: User = Depends(crud_user.get_current_user)) -> Any:
+async def test_token(current_user: User = Depends(get_current_user)) -> Any:
     """测试访问令牌"""
     return current_user 

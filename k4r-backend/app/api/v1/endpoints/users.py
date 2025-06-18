@@ -1,9 +1,10 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.crud import crud_user
+from app.crud.crud_user import get_current_active_user, get_current_active_superuser
 from app.schemas import user as user_schemas
 from app.models.user import User
 
@@ -15,7 +16,7 @@ async def read_users(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(crud_user.get_current_active_superuser),
+    current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
     """获取用户列表（仅超级用户）"""
     users = await crud_user.get_multi(db, skip=skip, limit=limit)
@@ -27,7 +28,7 @@ async def create_user(
     *,
     db: AsyncSession = Depends(get_db),
     user_in: user_schemas.UserCreate,
-    current_user: User = Depends(crud_user.get_current_active_superuser),
+    current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
     """创建新用户（仅超级用户）"""
     user = await crud_user.get_by_email(db, email=user_in.email)
@@ -44,10 +45,10 @@ async def create_user(
 async def update_user_me(
     *,
     db: AsyncSession = Depends(get_db),
-    password: str = None,
-    full_name: str = None,
-    email: str = None,
-    current_user: User = Depends(crud_user.get_current_active_user),
+    password: Optional[str] = None,
+    full_name: Optional[str] = None,
+    email: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """更新当前用户信息"""
     current_user_data = user_schemas.UserUpdate(**current_user.__dict__)
@@ -63,7 +64,7 @@ async def update_user_me(
 
 @router.get("/me", response_model=user_schemas.User)
 async def read_user_me(
-    current_user: User = Depends(crud_user.get_current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """获取当前用户信息"""
     return current_user
@@ -72,14 +73,14 @@ async def read_user_me(
 @router.get("/{user_id}", response_model=user_schemas.User)
 async def read_user_by_id(
     user_id: int,
-    current_user: User = Depends(crud_user.get_current_active_user),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """根据ID获取特定用户"""
     user = await crud_user.get(db, id=user_id)
     if user == current_user:
         return user
-    if not current_user.is_superuser:
+    if not crud_user.is_superuser(current_user):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="权限不足"
@@ -93,7 +94,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     user_id: int,
     user_in: user_schemas.UserUpdate,
-    current_user: User = Depends(crud_user.get_current_active_superuser),
+    current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
     """更新用户信息（仅超级用户）"""
     user = await crud_user.get(db, id=user_id)
