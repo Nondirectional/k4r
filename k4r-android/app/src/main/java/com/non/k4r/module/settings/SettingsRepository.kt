@@ -11,6 +11,8 @@ class SettingsRepository(private val context: Context) {
         private const val CHAT_MODEL = "chat_model"
         private const val VOICE_API_KEY = "voice_api_key"
         private const val VOICE_MODEL = "voice_model"
+        private const val BACKEND_HOST = "backend_host"
+        private const val BACKEND_PORT = "backend_port"
     }
     
     private val sharedPreferences: SharedPreferences = 
@@ -48,5 +50,22 @@ class SettingsRepository(private val context: Context) {
     
     fun getVoiceModel(): String {
         return sharedPreferences.getString(VOICE_MODEL, "paraformer-realtime-v2") ?: "paraformer-realtime-v2"
+    }
+
+    // 后端服务配置
+    fun saveBackendHost(host: String) {
+        sharedPreferences.edit().putString(BACKEND_HOST, host).apply()
+    }
+
+    fun getBackendHost(): String {
+        return sharedPreferences.getString(BACKEND_HOST, "10.0.2.2") ?: "10.0.2.2"
+    }
+
+    fun saveBackendPort(port: String) {
+        sharedPreferences.edit().putString(BACKEND_PORT, port).apply()
+    }
+
+    fun getBackendPort(): String {
+        return sharedPreferences.getString(BACKEND_PORT, "8000") ?: "8000"
     }
 } 

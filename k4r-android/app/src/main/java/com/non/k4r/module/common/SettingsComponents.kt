@@ -32,6 +32,8 @@ fun SettingsScreen(
     var chatModel by remember { mutableStateOf("") }
     var voiceApiKey by remember { mutableStateOf("") }
     var voiceModel by remember { mutableStateOf("") }
+    var backendHost by remember { mutableStateOf("") }
+    var backendPort by remember { mutableStateOf("") }
     var showSaveDialog by remember { mutableStateOf(false) }
     
     // 加载当前设置
@@ -40,6 +42,8 @@ fun SettingsScreen(
         chatModel = settingsRepository.getChatModel()
         voiceApiKey = settingsRepository.getVoiceApiKey()
         voiceModel = settingsRepository.getVoiceModel()
+        backendHost = settingsRepository.getBackendHost()
+        backendPort = settingsRepository.getBackendPort()
     }
     
     Scaffold(
@@ -67,6 +71,41 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 后端服务配置
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "后端服务配置",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    OutlinedTextField(
+                        value = backendHost,
+                        onValueChange = { backendHost = it },
+                        label = { Text("后端服务Host") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("例如: 10.0.2.2") }
+                    )
+
+                    OutlinedTextField(
+                        value = backendPort,
+                        onValueChange = { backendPort = it },
+                        label = { Text("后端服务端口") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("例如: 8000") }
+                    )
+                }
+            }
+            
             // 大模型对话配置
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -148,82 +187,6 @@ fun SettingsScreen(
                     )
                 }
             }
-            
-            // 使用说明
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "使用说明",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    
-                    Text(
-                        text = "• 获取API Key：登录阿里云控制台 → 进入模型服务灵积(DashScope) → API-KEY管理",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    
-                    Text(
-                        text = "• 大模型对话和语音识别可以使用同一个API Key",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    
-                    Text(
-                        text = "• 修改配置后请重启应用使其生效",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            
-            // 账户管理
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "账户管理",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    
-                    Button(
-                        onClick = {
-                            loginViewModel.logout()
-                            navController.navigate(LoginRoute) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "退出登录",
-                            color = MaterialTheme.colorScheme.onError
-                        )
-                    }
-                }
-            }
         }
     }
     
@@ -240,6 +203,8 @@ fun SettingsScreen(
                         settingsRepository.saveChatModel(chatModel)
                         settingsRepository.saveVoiceApiKey(voiceApiKey)
                         settingsRepository.saveVoiceModel(voiceModel)
+                        settingsRepository.saveBackendHost(backendHost)
+                        settingsRepository.saveBackendPort(backendPort)
                         showSaveDialog = false
                         navController.navigateUp()
                     }
