@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -27,6 +29,31 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val props = Properties()
+            val propFile = project.rootProject.file("gradle.properties")
+            if (propFile.exists()) {
+                props.load(propFile.inputStream())
+            }
+
+            val storeFilePath = props.getProperty("K4R_RELEASE_STORE_FILE")
+            if (storeFilePath != null) {
+                val keystoreFile = project.rootProject.file(storeFilePath)
+                if (keystoreFile.exists()) {
+                    storeFile = keystoreFile
+                    storePassword = props.getProperty("K4R_RELEASE_STORE_PASSWORD")
+                    keyAlias = props.getProperty("K4R_RELEASE_KEY_ALIAS")
+                    keyPassword = props.getProperty("K4R_RELEASE_KEY_PASSWORD")
+                } else {
+                    println("Keystore file not found at path: $storeFilePath")
+                }
+            } else {
+                println("'K4R_RELEASE_STORE_FILE' not found in gradle.properties")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -34,14 +61,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true

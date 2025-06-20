@@ -17,3 +17,6 @@ local.properties
 /k4r/.idea/
 /.idea/
 /.idea/inspectionProfiles/
+
+# Keystore
+/app/release.keystore
