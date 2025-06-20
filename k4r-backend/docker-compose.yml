@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   # FastAPI 应用
-  api:
+  api:  
+    container_name: k4r-api
     build: .
     ports:
       - "8000:8000"
@@ -19,6 +20,7 @@ services:
 
   # PostgreSQL 数据库
   db:
+    container_name: k4r-db
     image: postgres:latest
     environment:
       POSTGRES_DB: k4r_db
@@ -31,6 +33,7 @@ services:
 
   # Redis 缓存
   redis:
+    container_name: k4r-redis
     image: redis:latest
     ports:
       - "6379:6379"
