@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
+from jose import jwt, JWTError
 from pydantic import ValidationError
 
 from app.core import security
@@ -64,17 +64,17 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         user = await self.get_by_email(db, email=email)
         if not user:
             return None
-        if not security.verify_password(password, user.hashed_password):
+        if not security.verify_password(password, str(user.hashed_password)):
             return None
         return user
 
     def is_active(self, user: User) -> bool:
         """检查用户是否激活"""
-        return user.is_active
+        return bool(user.is_active)
 
     def is_superuser(self, user: User) -> bool:
         """检查用户是否为超级用户"""
-        return user.is_superuser
+        return bool(user.is_superuser)
 
 
 # 全局用户CRUD实例
@@ -91,13 +91,18 @@ async def get_current_user(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
-    except (jwt.JWTError, ValidationError):
+    except (JWTError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="无法验证凭据"
         )
     
-    user = await crud_user.get(db, id=token_data.sub)
+    if not token_data.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="无法验证凭据"
+        )
+    user = await crud_user.get(db, id=int(token_data.sub))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

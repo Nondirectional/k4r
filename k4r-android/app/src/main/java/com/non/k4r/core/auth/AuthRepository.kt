@@ -1,7 +1,6 @@
 package com.non.k4r.core.auth
 
 import com.non.k4r.core.network.api.AuthApi
-import com.non.k4r.core.network.dto.LoginRequest
 import com.non.k4r.core.network.dto.UserResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -22,8 +21,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun login(username: String, password: String): AuthResult<UserResponse> {
         return try {
-            val loginRequest = LoginRequest(username, password)
-            val response = authApi.login(loginRequest)
+            val response = authApi.login(username, password)
             
             if (response.isSuccessful) {
                 val loginResponse = response.body()
@@ -48,6 +46,7 @@ class AuthRepository @Inject constructor(
                 val errorMessage = when (response.code()) {
                     401 -> "用户名或密码错误"
                     400 -> "用户账号已被禁用"
+                    422 -> "请求数据格式错误或验证失败"
                     else -> "登录失败: ${response.message()}"
                 }
                 AuthResult.Error(errorMessage)

@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.crud import crud_user
 from app.crud.crud_user import get_current_user
-from app.schemas.user import Token
+from app.schemas.user import Token, User as UserSchema
 from app.models.user import User
 
 router = APIRouter()
@@ -44,7 +44,7 @@ async def login_access_token(
     }
 
 
-@router.post("/test-token", response_model=Token)
+@router.post("/test-token", response_model=UserSchema)
 async def test_token(current_user: User = Depends(get_current_user)) -> Any:
     """测试访问令牌"""
     return current_user 

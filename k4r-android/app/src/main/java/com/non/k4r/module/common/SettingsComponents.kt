@@ -195,7 +195,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
             title = { Text("保存设置") },
-            text = { Text("确定要保存当前配置吗？保存后需要重启应用以使配置生效。") },
+            text = { Text("确定要保存当前配置吗？配置将立即生效。") },
             confirmButton = {
                 TextButton(
                     onClick = {
